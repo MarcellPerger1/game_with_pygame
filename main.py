@@ -9,6 +9,7 @@ from typing import Any, TypeVar, NoReturn, Literal
 
 import pygame
 
+from containers import HasRect
 from pygame_patches import dist_squared_to
 from trigger_once import trigger_once
 from mem_profile import MemProf
@@ -55,12 +56,6 @@ def rect_from_size(sz: Vec2, **kwargs):
     for k, v in kwargs.items():
         setattr(rect, k, v)
     return rect
-
-# only job is to hold a rect as some methods require
-# passing object with rect attribute not rect
-class HasRect:
-    def __init__(self, rect: pg.Rect):
-        self.rect = rect
 
 
 class CommonSprite(pg.sprite.Sprite):
