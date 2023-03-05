@@ -1,0 +1,1 @@
+pylint pg_sprite.py --rcfile pg_pylint_conf --disable=E0015
