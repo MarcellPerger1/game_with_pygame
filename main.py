@@ -68,7 +68,7 @@ class CommonSprite(pg.sprite.Sprite):
         groups = (root_group, *groups) if self.in_root else groups
         pg.sprite.Sprite.__init__(self, *groups)
         if self.size is None:
-            raise self._err_missing_size(" __init__")
+            raise self._err_missing_size("__init__")
         if surf is None:
             surf = self.make_surface()
         self.image = self.surf = surf
