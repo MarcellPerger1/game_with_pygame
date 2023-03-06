@@ -5,10 +5,12 @@ import random
 import sys
 import time
 from math import inf
-from typing import Any, TypeVar, NoReturn, Literal
+from typing import Any, NoReturn, Literal
 
 import pygame
 
+from util import option
+from pg_util import rect_from_size
 from containers import HasRect
 from pygame_patches import dist_squared_to
 from trigger_once import trigger_once
@@ -38,24 +40,8 @@ MAX_ENEMIES_PER_TICK = 18
 MIN_SPAWN_INTERVAL = 0.01
 
 
-T = TypeVar('T')
-
-
-def option(v: T | None, default: T) -> T:
-    if v is None:
-        return default
-    return v
-
-
 class PGExit(BaseException):
     pass
-
-
-def rect_from_size(sz: Vec2, **kwargs):
-    rect = pg.Rect((0, 0), sz)
-    for k, v in kwargs.items():
-        setattr(rect, k, v)
-    return rect
 
 
 class CommonSprite(pg.sprite.Sprite):
