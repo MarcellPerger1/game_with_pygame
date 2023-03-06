@@ -23,8 +23,8 @@ Vec2 = pg.math.Vector2
 
 DEBUG_MEMORY = False
 DEBUG_CPU = True
-USE_FLIP = True  # roughly 33 FPS -> 40 FPS
-SHOW_BULLETS = False
+USE_FLIP = True
+SHOW_BULLETS = False  # todo test the effect of this on performance
 SHOW_TURRET_RANGE = True
 
 FPS = 60
@@ -132,7 +132,7 @@ if __name__ == '__main__':
         size = Vec2(P_RADIUS * 2, P_RADIUS * 2)
 
         def __init__(self):
-            super().__init__(Vec2(700, 400), root_group)
+            super().__init__(Vec2(700, 400))
             self.turrets = 0
             self.is_dead = False
             self.enemies_killed = 0
@@ -163,13 +163,13 @@ if __name__ == '__main__':
                 self.while_left_click()
 
         def while_left_click(self):
-            global turrets
+            global turrets  # to correct pycharm bug
             if self.turrets > 0:
                 mouse_pos = Vec2(pg.mouse.get_pos())
                 if not pg.sprite.spritecollide(
                         HasRect(Turret.get_virtual_rect(mouse_pos)), turrets, False):
                     Turret(mouse_pos)
-                    player.turrets -= 1
+                    self.turrets -= 1
                     update_turrets_text()
 
         def on_kill_enemy(self, _enemy: Enemy, _bullet: Bullet):
