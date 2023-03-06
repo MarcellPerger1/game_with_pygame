@@ -10,7 +10,7 @@ from typing import Any, NoReturn, Literal
 import pygame
 
 from util import option
-from pg_util import rect_from_size
+from pg_util import rect_from_size, render_text
 from containers import HasRect
 from pygame_patches import dist_squared_to
 from trigger_once import trigger_once
@@ -378,33 +378,6 @@ if __name__ == '__main__':
             self.health = health
             self.immobile = immobile
 
-
-    def justify_rect(rect: pg.Rect, justify: str, tot_width: int | float):
-        justify = justify.lower()
-        rect = rect.copy()
-        if justify == 'left':
-            pass  # already at the left
-        elif justify in 'center':
-            rect.centerx = tot_width / 2
-        elif justify == 'right':
-            rect.right = tot_width
-        return rect
-
-
-    def render_text(font: pg.font.Font, text: str, antialias=True, color='black', bg=None,
-                    justify='left'):
-        lines = text.splitlines()
-        rendered_lines = [font.render(line, antialias, color, bg) for line in lines]
-        tot_height = sum(r.get_height() for r in rendered_lines)
-        tot_width = max(r.get_width() for r in rendered_lines)
-        dest = pg.surface.Surface((tot_width, tot_height), pg.SRCALPHA)
-        y0 = 0
-        for src in rendered_lines:
-            w, h = src.get_size()
-            dest_rect = justify_rect(pg.Rect((0, y0), (w, h)), justify, tot_width)
-            dest.blit(src, dest_rect)
-            y0 += h
-        return dest
 
     class GameOver(pygame.sprite.Sprite):
         def __init__(self, text: str):
