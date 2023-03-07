@@ -526,6 +526,13 @@ if __name__ == '__main__':
             pg.display.update(dirty)
             del dirty
 
+    def tick_with_prof(p: cProfile.Profile | None):
+        if not p:
+            return tick_main()
+        with p:
+            tick_main()
+        prof.dump_stats('game_perf.prof')
+
 
     snapshot: Any = None
     try:
@@ -566,12 +573,7 @@ if __name__ == '__main__':
             screen.fill((255, 255, 255))
             dirty_this_frame.clear()
             handle_events()
-            if prof:
-                prof.enable()
-            tick_main()
-            if prof:
-                prof.disable()
-                prof.dump_stats('game_perf.prof')
+            tick_with_prof(prof)
             t1 = time.perf_counter()
             if ticks % 10 == 1:
                 print(f'Update took: {(t1 - t0) * 1000:.2f}ms')
