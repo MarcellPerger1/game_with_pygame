@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import cProfile
 import random
-import sys
 import time
 import tracemalloc
 from math import inf
@@ -465,7 +464,7 @@ if __name__ == '__main__':
         while (enemy_spawner.next_enemy_time <= ticks
                and enemies_this_tick < MAX_ENEMIES_PER_TICK):
             spawn_enemy()
-            enemy_spawner.next_enemy_time += enemy_spawn_interval
+            enemy_spawner.next_enemy_time += enemy_spawner.enemy_spawn_interval
             enemies_this_tick += 1
         # if it would've spawned an extra enemy, set the next enemy time to the current time
         # (won't spawn it this frame but still allows spawning a lot next frame)
@@ -492,25 +491,24 @@ if __name__ == '__main__':
 
 
     def spawn_interval_decrease():
-        return (0.980 if enemy_spawn_interval > 4.0 else
-                0.990 if enemy_spawn_interval > 2.0 else
-                0.994 if enemy_spawn_interval > 0.9 else
-                0.997 if enemy_spawn_interval > 0.5 else
-                0.9993 if enemy_spawn_interval > 0.25 else
-                0.9998 if enemy_spawn_interval > 0.12 else
-                0.99993 if enemy_spawn_interval > 0.06 else
+        curr_val = enemy_spawner.enemy_spawn_interval
+        return (0.980 if curr_val > 4.0 else
+                0.990 if curr_val > 2.0 else
+                0.994 if curr_val > 0.9 else
+                0.997 if curr_val > 0.5 else
+                0.9993 if curr_val > 0.25 else
+                0.9998 if curr_val > 0.12 else
+                0.99993 if curr_val > 0.06 else
                 0.99998)
 
 
     def on_kill_enemy(enemy, bullet):
-        global enemy_spawn_interval
-        enemy_spawn_interval *= spawn_interval_decrease()
-        enemy_spawn_interval = pg.math.clamp(enemy_spawn_interval, MIN_SPAWN_INTERVAL, inf)
+        enemy_spawner.enemy_spawn_interval *= spawn_interval_decrease()
+        if enemy_spawner.enemy_spawn_interval < MIN_SPAWN_INTERVAL:
+            enemy_spawner.enemy_spawn_interval = MIN_SPAWN_INTERVAL
         player.on_kill_enemy(enemy, bullet)
 
     def handle_events():
-        global enemy_spawn_interval
-        # pump events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 if DEBUG_MEMORY:
@@ -519,8 +517,7 @@ if __name__ == '__main__':
             if event.type == pg.KEYDOWN and event.key == pg.K_t:
                 player.turrets += 30
                 update_turrets_text()
-                enemy_spawn_interval *= 0.3
-                print(player.turrets, enemy_spawn_interval, file=sys.stderr)
+                enemy_spawner.enemy_spawn_interval *= 0.3
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
                 if DEBUG_CPU:
                     perf_mgr.curr_cpu_profile = cProfile.Profile()
@@ -565,7 +562,6 @@ if __name__ == '__main__':
         # other vars
         ticks = 0
         screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
-        enemy_spawn_interval = SPAWN_INTERVAL_START
         dirty_this_frame: list[pg.Rect] = []
         # groups
         root_group = pg.sprite.RenderUpdates()
