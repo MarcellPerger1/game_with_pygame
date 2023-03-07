@@ -52,7 +52,7 @@ class CommonSprite(pg.sprite.Sprite):
     in_root = True
 
     def __init__(self, pos: Vec2, *groups: pg.sprite.AbstractGroup,
-                 size=None, in_root: bool = None, surf: pg.surface.Surface=None):
+                 size=None, in_root: bool = None, surf: pg.surface.Surface = None):
         """Create this sprite
 
         Initialise this sprite with image and rect attributes
@@ -90,7 +90,7 @@ class CommonSprite(pg.sprite.Sprite):
     @classmethod
     def _err_missing_size(cls, method_name: str) -> NoReturn:
         return TypeError(f"size must be passed to {method_name}"
-                        " or set as a class attribute")
+                         " or set as a class attribute")
 
     @classmethod
     def get_virtual_rect(cls, pos: Vec2, size: Vec2 = None):
@@ -116,6 +116,7 @@ class EnemySpawnMgr:
         self.spawn_enemies = False
         self.next_enemy_time: int | None = None
         self.enemy_spawn_interval: float = SPAWN_INTERVAL_START
+
 
 if __name__ == '__main__':
     mem_prof = MemProf(DEBUG_MEMORY)
@@ -315,7 +316,6 @@ if __name__ == '__main__':
             return screen.blit(cls.overlays_surf, screen.get_rect())
 
 
-
     class Bullet(CommonSprite):
         size = Vec2(6, 6)
 
@@ -457,25 +457,27 @@ if __name__ == '__main__':
 
 
     def on_post_tick():
-        global next_enemy_time
         if not enemy_spawner.spawn_enemies:
             return
-        if next_enemy_time is None:
-            next_enemy_time = ticks + SPAWN_ENEMY_DELAY_START
+        if enemy_spawner.next_enemy_time is None:
+            enemy_spawner.next_enemy_time = ticks + SPAWN_ENEMY_DELAY_START
         enemies_this_tick = 0
-        while ticks >= next_enemy_time and enemies_this_tick < MAX_ENEMIES_PER_TICK:
+        while (enemy_spawner.next_enemy_time <= ticks
+               and enemies_this_tick < MAX_ENEMIES_PER_TICK):
             spawn_enemy()
-            next_enemy_time += enemy_spawn_interval
+            enemy_spawner.next_enemy_time += enemy_spawn_interval
             enemies_this_tick += 1
-        # ensure next enemy can't land in this tick
-        next_enemy_time = pg.math.clamp(next_enemy_time, ticks, inf)
-
+        # if it would've spawned an extra enemy, set the next enemy time to the current time
+        # (won't spawn it this frame but still allows spawning a lot next frame)
+        # should really be `ticks + epsilon` as next enemy should spawn at the very start
+        # of the next frame but we aren't spawning extra enemies this frame anyway.
+        if enemy_spawner.next_enemy_time < ticks:
+            enemy_spawner.next_enemy_time = ticks
 
     class Tutorial:
         @classmethod
         @trigger_once
         def place_turret(cls):
-            global next_enemy_time
             enemy_spawner.spawn_enemies = True
             initial_enemy.immobile = False
 
@@ -577,8 +579,6 @@ if __name__ == '__main__':
         initial_enemy = Enemy(Vec2(50, 655), immobile=True)
         turrets_text = InvText("Turrets: 0")
         fps_text = FpsText("FPS: N/A")
-        # timers
-        next_enemy_time = None
         # initialise screen
         screen.fill((255, 255, 255))
         pg.display.flip()
