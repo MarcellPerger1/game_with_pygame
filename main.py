@@ -111,9 +111,16 @@ class PerfMgr:
         self.do_cpu = cpu
 
 
+class EnemySpawnMgr:
+    def __init__(self):
+        self.spawn_enemies = False
+        self.next_enemy_time: int | None = None
+        self.enemy_spawn_interval: float = SPAWN_INTERVAL_START
+
 if __name__ == '__main__':
     mem_prof = MemProf(DEBUG_MEMORY)
     perf_mgr = PerfMgr()
+    enemy_spawner = EnemySpawnMgr()
     print('Hello world')
 
     clock = pg.time.Clock()
@@ -451,7 +458,7 @@ if __name__ == '__main__':
 
     def on_post_tick():
         global next_enemy_time
-        if not spawn_enemies:
+        if not enemy_spawner.spawn_enemies:
             return
         if next_enemy_time is None:
             next_enemy_time = ticks + SPAWN_ENEMY_DELAY_START
@@ -468,8 +475,8 @@ if __name__ == '__main__':
         @classmethod
         @trigger_once
         def place_turret(cls):
-            global spawn_enemies, next_enemy_time
-            spawn_enemies = True
+            global next_enemy_time
+            enemy_spawner.spawn_enemies = True
             initial_enemy.immobile = False
 
 
@@ -572,7 +579,6 @@ if __name__ == '__main__':
         fps_text = FpsText("FPS: N/A")
         # timers
         next_enemy_time = None
-        spawn_enemies = False
         # initialise screen
         screen.fill((255, 255, 255))
         pg.display.flip()
