@@ -181,11 +181,10 @@ if __name__ == '__main__':
                 self.while_left_click()
 
         def while_left_click(self):
-            global turrets  # to correct pycharm bug
             if self.turrets > 0:
                 mouse_pos = Vec2(pg.mouse.get_pos())
                 if not pg.sprite.spritecollide(
-                        HasRect(Turret.get_virtual_rect(mouse_pos)), turrets, False):
+                        HasRect(Turret.get_virtual_rect(mouse_pos)), turrets_group, False):
                     Turret(mouse_pos)
                     self.turrets -= 1
                     update_turrets_text()
@@ -213,7 +212,6 @@ if __name__ == '__main__':
             if pg.sprite.collide_rect(self, player):
                 self.kill()
                 self.on_collect()
-
 
     class TurretItem(Collectable):
         def draw_sprite(self):
@@ -369,7 +367,6 @@ if __name__ == '__main__':
             if pg.sprite.collide_rect(self, player):
                 self.on_collide_player()
 
-
     class Enemy(CommonEnemy):
         size = Vec2(30, 30)
 
@@ -385,7 +382,6 @@ if __name__ == '__main__':
             if not self.immobile:
                 self.pos = self.pos.move_towards(player.pos, ENEMY_SPEED)
                 self.rect.center = self.pos
-
 
     class EnemyWithHealth(CommonEnemy):
         size = Vec2(30, 30)
@@ -405,7 +401,6 @@ if __name__ == '__main__':
                 huge_font, self.text, color='black', justify='center')
             self.rect = self.surf.get_rect(center=self.pos)
 
-
     class InvText(pygame.sprite.Sprite):
         text: str
         surf: pg.surface.Surface
@@ -422,7 +417,6 @@ if __name__ == '__main__':
             self.surf = self.image = monospace_font.render(
                 self.text, True, pg.color.Color('black'))
             self.rect = self.surf.get_rect(topleft=self.topleft)
-
 
     class FpsText(pg.sprite.Sprite):
         text: str
@@ -568,7 +562,7 @@ if __name__ == '__main__':
         enemies = pg.sprite.Group()
         turret_range_overlay = pg.sprite.Group()
         bullets = pg.sprite.Group()
-        turrets = pg.sprite.Group()
+        turrets = turrets_group = pg.sprite.Group()
         # objects
         player = Player()
         TurretItem(Vec2(400, 600))
