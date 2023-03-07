@@ -4,6 +4,7 @@ import cProfile
 import random
 import sys
 import time
+import tracemalloc
 from math import inf
 from typing import Any, NoReturn, Literal
 
@@ -101,8 +102,18 @@ class CommonSprite(pg.sprite.Sprite):
         return r
 
 
+class PerfMgr:
+    mem_snapshot: tracemalloc.Snapshot | None = None
+    curr_cpu_profile: cProfile.Profile | None = None
+
+    def __init__(self, memory=DEBUG_MEMORY, cpu=DEBUG_CPU):
+        self.do_memory = memory
+        self.do_cpu = cpu
+
+
 if __name__ == '__main__':
     mem_prof = MemProf(DEBUG_MEMORY)
+    perf_mgr = PerfMgr()
     print('Hello world')
 
     clock = pg.time.Clock()
@@ -489,12 +500,12 @@ if __name__ == '__main__':
         player.on_kill_enemy(enemy, bullet)
 
     def handle_events():
-        global snapshot, prof, enemy_spawn_interval
+        global enemy_spawn_interval
         # pump events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 if DEBUG_MEMORY:
-                    snapshot = mem_prof.take_snapshot()
+                    perf_mgr.mem_snapshot = mem_prof.take_snapshot()
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_t:
                 player.turrets += 30
@@ -503,7 +514,7 @@ if __name__ == '__main__':
                 print(player.turrets, enemy_spawn_interval, file=sys.stderr)
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
                 if DEBUG_CPU:
-                    prof = cProfile.Profile()
+                    perf_mgr.curr_cpu_profile = cProfile.Profile()
 
     def tick_main():
         # do tick
@@ -531,10 +542,9 @@ if __name__ == '__main__':
             return tick_main()
         with p:
             tick_main()
-        prof.dump_stats('game_perf.prof')
+        p.dump_stats('game_perf.prof')
 
 
-    snapshot: Any = None
     try:
         # init stuff
         pygame.init()
@@ -568,12 +578,12 @@ if __name__ == '__main__':
         pg.display.flip()
         # main loop
         while True:
-            prof: cProfile.Profile | None = None
+            perf_mgr.curr_cpu_profile = None
             t0 = time.perf_counter()
             screen.fill((255, 255, 255))
             dirty_this_frame.clear()
             handle_events()
-            tick_with_prof(prof)
+            tick_with_prof(perf_mgr.curr_cpu_profile)
             t1 = time.perf_counter()
             if ticks % 10 == 1:
                 print(f'Update took: {(t1 - t0) * 1000:.2f}ms')
@@ -583,5 +593,5 @@ if __name__ == '__main__':
             ticks += 1
     except PGExit:
         pygame.quit()
-    if snapshot and DEBUG_MEMORY:
-        mem_prof.display_top(snapshot)
+    if perf_mgr.mem_snapshot and DEBUG_MEMORY:
+        mem_prof.display_top(perf_mgr.mem_snapshot)
