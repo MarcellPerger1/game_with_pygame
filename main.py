@@ -137,6 +137,17 @@ class EnemySpawnMgr:
         if self.next_enemy_time < ticks:
             self.next_enemy_time = ticks
 
+    def get_interval_decrease(self):
+        curr_val = self.enemy_spawn_interval
+        return (0.980 if curr_val > 4.0 else
+                0.990 if curr_val > 2.0 else
+                0.994 if curr_val > 0.9 else
+                0.997 if curr_val > 0.5 else
+                0.9993 if curr_val > 0.25 else
+                0.9998 if curr_val > 0.12 else
+                0.99993 if curr_val > 0.06 else
+                0.99998)
+
 
 if __name__ == '__main__':
     mem_prof = MemProf(DEBUG_MEMORY)
@@ -490,20 +501,8 @@ if __name__ == '__main__':
         return TurretRangeIndicator.blit_all()
 
 
-    def spawn_interval_decrease():
-        curr_val = enemy_spawner.enemy_spawn_interval
-        return (0.980 if curr_val > 4.0 else
-                0.990 if curr_val > 2.0 else
-                0.994 if curr_val > 0.9 else
-                0.997 if curr_val > 0.5 else
-                0.9993 if curr_val > 0.25 else
-                0.9998 if curr_val > 0.12 else
-                0.99993 if curr_val > 0.06 else
-                0.99998)
-
-
     def on_kill_enemy(enemy, bullet):
-        enemy_spawner.enemy_spawn_interval *= spawn_interval_decrease()
+        enemy_spawner.enemy_spawn_interval *= enemy_spawner.get_interval_decrease()
         if enemy_spawner.enemy_spawn_interval < MIN_SPAWN_INTERVAL:
             enemy_spawner.enemy_spawn_interval = MIN_SPAWN_INTERVAL
         player.on_kill_enemy(enemy, bullet)
