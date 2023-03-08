@@ -168,13 +168,16 @@ class Game:
 
     def init(self):
         self._init_pygame()
+        self._init_timing()
         self._init_fonts()
 
     def _init_pygame(self):
+        print('[INFO] Initializing modules')
         n_pass, n_fail = pygame.init()
         print(f'[INFO] Initialized modules: {n_pass} successes, {n_fail} fails')
 
     def _init_fonts(self):
+        print('[INFO] Initializing fonts')
         self.fonts = Fonts()
         t0 = time.perf_counter()
         self.fonts.huge = pygame.font.SysFont('Helvetica', 200, bold=True)
@@ -182,14 +185,17 @@ class Game:
         t1 = time.perf_counter()
         print(f'[INFO] Initialized fonts in {t1 - t0:.2f}s')
 
+    def _init_timing(self):
+        print('[INFO] Initializing clock')
+        self.curr_tick = 0
+        self.clock = pg.time.Clock()
+
 
 if __name__ == '__main__':
     mem_prof = MemProf(DEBUG_MEMORY)
     perf_mgr = PerfMgr()
     enemy_spawner = EnemySpawnMgr()
     print('Hello world')
-
-    clock = pg.time.Clock()
 
     def nearest_of_group(pos: Vec2, group: pg.sprite.AbstractGroup):
         min_dist = inf
@@ -503,7 +509,7 @@ if __name__ == '__main__':
 
         def update(self, *args: Any, **kwargs: Any) -> None:
             if ticks % 5 == 1:
-                self.set_text(f'FPS: {clock.get_fps():.2f}')
+                self.set_text(f'FPS: {game.clock.get_fps():.2f}')
 
 
     def spawn_enemy():
@@ -614,9 +620,10 @@ if __name__ == '__main__':
             t1 = time.perf_counter()
             if ticks % 10 == 1:
                 print(f'Update took: {(t1 - t0) * 1000:.2f}ms')
-                print(f'FPS: {clock.get_fps():.2f}')
+                print(f'FPS: {game.clock.get_fps():.2f}')
             # update clock
-            clock.tick(FPS)
+            game.clock.tick(FPS)
+            game.curr_tick += 1
             ticks += 1
     except PGExit:
         pygame.quit()
