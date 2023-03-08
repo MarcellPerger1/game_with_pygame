@@ -116,6 +116,20 @@ class EnemySpawnMgr:
         self.next_enemy_time: int | None = None
         self.enemy_spawn_interval: float = SPAWN_INTERVAL_START
 
+    def spawn_enemies_fn(self):
+        enemies_this_tick = 0
+        while (self.next_enemy_time <= ticks
+               and enemies_this_tick < MAX_ENEMIES_PER_TICK):
+            spawn_enemy()
+            self.next_enemy_time += self.enemy_spawn_interval
+            enemies_this_tick += 1
+        # if it would've spawned an extra enemy, set the next enemy time to the current time
+        # (won't spawn it this frame but still allows spawning a lot next frame)
+        # should really be `ticks + epsilon` as next enemy should spawn at the very start
+        # of the next frame but we aren't spawning extra enemies this frame anyway.
+        if self.next_enemy_time < ticks:
+            self.next_enemy_time = ticks
+
 
 if __name__ == '__main__':
     mem_prof = MemProf(DEBUG_MEMORY)
@@ -454,18 +468,7 @@ if __name__ == '__main__':
             return
         if enemy_spawner.next_enemy_time is None:
             enemy_spawner.next_enemy_time = ticks + SPAWN_ENEMY_DELAY_START
-        enemies_this_tick = 0
-        while (enemy_spawner.next_enemy_time <= ticks
-               and enemies_this_tick < MAX_ENEMIES_PER_TICK):
-            spawn_enemy()
-            enemy_spawner.next_enemy_time += enemy_spawner.enemy_spawn_interval
-            enemies_this_tick += 1
-        # if it would've spawned an extra enemy, set the next enemy time to the current time
-        # (won't spawn it this frame but still allows spawning a lot next frame)
-        # should really be `ticks + epsilon` as next enemy should spawn at the very start
-        # of the next frame but we aren't spawning extra enemies this frame anyway.
-        if enemy_spawner.next_enemy_time < ticks:
-            enemy_spawner.next_enemy_time = ticks
+        enemy_spawner.spawn_enemies_fn()
 
     class Tutorial:
         @classmethod
