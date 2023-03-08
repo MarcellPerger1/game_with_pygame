@@ -112,11 +112,11 @@ class PerfMgr:
 
 class EnemySpawnMgr:
     def __init__(self):
-        self.spawn_enemies = False
+        self.is_enabled = False
         self.next_enemy_time: int | None = None
         self.enemy_spawn_interval: float = SPAWN_INTERVAL_START
 
-    def spawn_enemies_fn(self):
+    def spawn_enemies(self):
         enemies_this_tick = 0
         while (self.next_enemy_time <= ticks
                and enemies_this_tick < MAX_ENEMIES_PER_TICK):
@@ -464,17 +464,17 @@ if __name__ == '__main__':
 
 
     def on_post_tick():
-        if not enemy_spawner.spawn_enemies:
+        if not enemy_spawner.is_enabled:
             return
         if enemy_spawner.next_enemy_time is None:
             enemy_spawner.next_enemy_time = ticks + SPAWN_ENEMY_DELAY_START
-        enemy_spawner.spawn_enemies_fn()
+        enemy_spawner.spawn_enemies()
 
     class Tutorial:
         @classmethod
         @trigger_once
         def place_turret(cls):
-            enemy_spawner.spawn_enemies = True
+            enemy_spawner.is_enabled = True
             initial_enemy.immobile = False
 
 
