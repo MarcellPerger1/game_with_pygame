@@ -557,10 +557,8 @@ if __name__ == '__main__':
         # init stuff
         pygame.init()
         # fonts
-        t0 = time.perf_counter()
         huge_font = pygame.font.SysFont('Helvetica', 200, bold=True)
         monospace_font = pygame.font.SysFont('monospace', 18)
-        t1 = time.perf_counter()
         # other vars
         ticks = 0
         screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
