@@ -154,6 +154,35 @@ class EnemySpawnMgr:
             self.enemy_spawn_interval = MIN_SPAWN_INTERVAL
 
 
+class Fonts:
+    huge: pygame.font.Font
+    monospace: pygame.font.Font
+
+
+# noinspection PyMethodMayBeStatic
+class Game:
+    def __init__(self, init=True):
+        self.is_init = False
+        if init:
+            self.init()
+
+    def init(self):
+        self._init_pygame()
+        self._init_fonts()
+
+    def _init_pygame(self):
+        n_pass, n_fail = pygame.init()
+        print(f'[INFO] Initialized modules: {n_pass} successes, {n_fail} fails')
+
+    def _init_fonts(self):
+        self.fonts = Fonts()
+        t0 = time.perf_counter()
+        self.fonts.huge = pygame.font.SysFont('Helvetica', 200, bold=True)
+        self.fonts.monospace = pygame.font.SysFont('monospace', 18)
+        t1 = time.perf_counter()
+        print(f'[INFO] Initialized fonts in {t1 - t0:.2f}s')
+
+
 if __name__ == '__main__':
     mem_prof = MemProf(DEBUG_MEMORY)
     perf_mgr = PerfMgr()
@@ -435,7 +464,7 @@ if __name__ == '__main__':
             self.text = text
             self.pos = screen.get_rect().center
             self.surf = self.image = render_text(
-                huge_font, self.text, color='black', justify='center')
+                game.fonts.huge, self.text, color='black', justify='center')
             self.rect = self.surf.get_rect(center=self.pos)
 
     class InvText(pygame.sprite.Sprite):
@@ -451,7 +480,7 @@ if __name__ == '__main__':
 
         def set_text(self, text: str):
             self.text = text
-            self.surf = self.image = monospace_font.render(
+            self.surf = self.image = game.fonts.monospace.render(
                 self.text, True, pg.color.Color('black'))
             self.rect = self.surf.get_rect(topleft=self.topleft)
 
@@ -468,7 +497,7 @@ if __name__ == '__main__':
 
         def set_text(self, text: str):
             self.text = text
-            self.surf = self.image = monospace_font.render(
+            self.surf = self.image = game.fonts.monospace.render(
                 self.text, True, pg.color.Color('black'))
             self.rect = self.surf.get_rect(topright=self.topright)
 
@@ -554,11 +583,7 @@ if __name__ == '__main__':
 
 
     try:
-        # init stuff
-        pygame.init()
-        # fonts
-        huge_font = pygame.font.SysFont('Helvetica', 200, bold=True)
-        monospace_font = pygame.font.SysFont('monospace', 18)
+        game = Game()
         # other vars
         ticks = 0
         screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
