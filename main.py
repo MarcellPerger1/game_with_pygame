@@ -116,6 +116,13 @@ class EnemySpawnMgr:
         self.next_enemy_time: int | None = None
         self.enemy_spawn_interval: float = SPAWN_INTERVAL_START
 
+    def handle_enemy_spawns(self):
+        if not self.is_enabled:
+            return
+        if self.next_enemy_time is None:
+            self.next_enemy_time = ticks + SPAWN_ENEMY_DELAY_START
+        self.spawn_enemies()
+
     def spawn_enemies(self):
         enemies_this_tick = 0
         while (self.next_enemy_time <= ticks
@@ -464,11 +471,7 @@ if __name__ == '__main__':
 
 
     def on_post_tick():
-        if not enemy_spawner.is_enabled:
-            return
-        if enemy_spawner.next_enemy_time is None:
-            enemy_spawner.next_enemy_time = ticks + SPAWN_ENEMY_DELAY_START
-        enemy_spawner.spawn_enemies()
+        enemy_spawner.handle_enemy_spawns()
 
     class Tutorial:
         @classmethod
