@@ -120,12 +120,12 @@ class EnemySpawnMgr:
         if not self.is_enabled:
             return
         if self.next_enemy_time is None:
-            self.next_enemy_time = ticks + SPAWN_ENEMY_DELAY_START
+            self.next_enemy_time = game.curr_tick + SPAWN_ENEMY_DELAY_START
         self.spawn_enemies()
 
     def spawn_enemies(self):
         enemies_this_tick = 0
-        while (self.next_enemy_time <= ticks
+        while (self.next_enemy_time <= game.curr_tick
                and enemies_this_tick < MAX_ENEMIES_PER_TICK):
             spawn_enemy()
             self.next_enemy_time += self.enemy_spawn_interval
@@ -134,8 +134,8 @@ class EnemySpawnMgr:
         # (won't spawn it this frame but still allows spawning a lot next frame)
         # should really be `ticks + epsilon` as next enemy should spawn at the very start
         # of the next frame but we aren't spawning extra enemies this frame anyway.
-        if self.next_enemy_time < ticks:
-            self.next_enemy_time = ticks
+        if self.next_enemy_time < game.curr_tick:
+            self.next_enemy_time = game.curr_tick
 
     def get_interval_decrease(self):
         curr_val = self.enemy_spawn_interval
@@ -161,6 +161,8 @@ class Fonts:
 
 # noinspection PyMethodMayBeStatic
 class Game:
+    curr_tick: int
+
     def __init__(self, init=True):
         self.is_init = False
         if init:
@@ -190,6 +192,14 @@ class Game:
         self.curr_tick = 0
         self.clock = pg.time.Clock()
 
+    @property
+    def ticks(self):
+        return self.curr_tick
+
+    @ticks.setter
+    def ticks(self, value: int):
+        self.curr_tick = value
+
 
 if __name__ == '__main__':
     mem_prof = MemProf(DEBUG_MEMORY)
@@ -212,10 +222,11 @@ if __name__ == '__main__':
     class EveryNTicks:
         def __init__(self, n: int, offset=1):
             self.n = n
-            self.started_at = ticks + offset
+            self.started_at = game.curr_tick + offset
 
         def is_this_frame(self):
-            return ticks >= self.started_at and (ticks - self.started_at) % self.n == 0
+            return (game.curr_tick >= self.started_at
+                    and (game.curr_tick - self.started_at) % self.n == 0)
 
 
     class Player(CommonSprite):
@@ -310,14 +321,15 @@ if __name__ == '__main__':
             pg.draw.rect(self.surf, 'darkgreen', self.surf.get_rect())
 
         def can_shoot(self):
-            return self.shot_on_tick is None or ticks >= self.shot_on_tick + self.interval
+            return (self.shot_on_tick is None
+                    or game.curr_tick >= self.shot_on_tick + self.interval)
 
         def update(self, *args: Any, **kwargs: Any) -> None:
             if self.can_shoot():
                 target: Enemy = nearest_of_group(self.pos, enemies)
                 if target is not None and self.can_shoot_enemy(target):
                     Bullet(self.pos, target.pos)
-                    self.shot_on_tick = ticks
+                    self.shot_on_tick = game.curr_tick
 
         def can_shoot_enemy(self, enemy: Enemy):
             return self.pos.distance_squared_to(enemy.pos) <= TURRET_RANGE * TURRET_RANGE
@@ -508,7 +520,7 @@ if __name__ == '__main__':
             self.rect = self.surf.get_rect(topright=self.topright)
 
         def update(self, *args: Any, **kwargs: Any) -> None:
-            if ticks % 5 == 1:
+            if game.curr_tick % 5 == 1:
                 self.set_text(f'FPS: {game.clock.get_fps():.2f}')
 
 
@@ -591,7 +603,6 @@ if __name__ == '__main__':
     try:
         game = Game()
         # other vars
-        ticks = 0
         screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
         dirty_this_frame: list[pg.Rect] = []
         # groups
@@ -612,19 +623,18 @@ if __name__ == '__main__':
         # main loop
         while True:
             perf_mgr.curr_cpu_profile = None
-            t0 = time.perf_counter()
+            _t0 = time.perf_counter()
             screen.fill((255, 255, 255))
             dirty_this_frame.clear()
             handle_events()
             tick_with_prof(perf_mgr.curr_cpu_profile)
-            t1 = time.perf_counter()
-            if ticks % 10 == 1:
-                print(f'Update took: {(t1 - t0) * 1000:.2f}ms')
+            _t1 = time.perf_counter()
+            if game.curr_tick % 10 == 1:
+                print(f'Update took: {(_t1 - _t0) * 1000:.2f}ms')
                 print(f'FPS: {game.clock.get_fps():.2f}')
             # update clock
             game.clock.tick(FPS)
             game.curr_tick += 1
-            ticks += 1
     except PGExit:
         pygame.quit()
     if perf_mgr.mem_snapshot and DEBUG_MEMORY:
