@@ -148,6 +148,11 @@ class EnemySpawnMgr:
                 0.99993 if curr_val > 0.06 else
                 0.99998)
 
+    def increment_interval_once(self):
+        self.enemy_spawn_interval *= self.get_interval_decrease()
+        if self.enemy_spawn_interval < MIN_SPAWN_INTERVAL:
+            self.enemy_spawn_interval = MIN_SPAWN_INTERVAL
+
 
 if __name__ == '__main__':
     mem_prof = MemProf(DEBUG_MEMORY)
@@ -502,9 +507,7 @@ if __name__ == '__main__':
 
 
     def on_kill_enemy(enemy, bullet):
-        enemy_spawner.enemy_spawn_interval *= enemy_spawner.get_interval_decrease()
-        if enemy_spawner.enemy_spawn_interval < MIN_SPAWN_INTERVAL:
-            enemy_spawner.enemy_spawn_interval = MIN_SPAWN_INTERVAL
+        enemy_spawner.increment_interval_once()
         player.on_kill_enemy(enemy, bullet)
 
     def handle_events():
