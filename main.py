@@ -199,6 +199,7 @@ class Game:
         # todo should use LayeredUpdates / LayeredDirty
         self.root_group = pg.sprite.RenderUpdates()
         self.enemies = pg.sprite.Group()
+        self.turret_range_overlays = pg.sprite.Group()
 
     def _init_screen(self):
         print('[INFO] Initializing window')
@@ -356,7 +357,7 @@ if __name__ == '__main__':
         overlays_surf: pg.Surface = None
 
         def __init__(self, pos: Vec2, *groups: pg.sprite.AbstractGroup):
-            super().__init__(pos, turret_range_overlay, *groups, in_root=False)
+            super().__init__(pos, game.turret_range_overlays, *groups, in_root=False)
             self.on_create()
 
         def make_surface(self):
@@ -397,7 +398,7 @@ if __name__ == '__main__':
             cls.make_overlay_surf()
             if cls.need_redraw == 'all':
                 cls.overlays_surf.fill((0, 0, 0, 0))
-                for t in turret_range_overlay:
+                for t in game.turret_range_overlays:
                     t: TurretRangeIndicator
                     t.draw_overlay(cls.overlays_surf)
             else:
@@ -616,8 +617,6 @@ if __name__ == '__main__':
     try:
         game = Game()
         # groups
-
-        turret_range_overlay = pg.sprite.Group()
         bullets = pg.sprite.Group()
         turrets = turrets_group = pg.sprite.Group()
         # objects
