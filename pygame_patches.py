@@ -15,6 +15,13 @@ unsafe_PyDecref.argtypes = [ctypes.py_object]
 unsafe_PyDecref.restype = None
 
 
+class MemLeaks:
+    dist_to = False
+
+
+leaks = MemLeaks
+
+
 def pg_has_memory_leak():
     c = (4, 5)  # need to use a tuple
     pos = Vec2(12, 13)
@@ -33,6 +40,7 @@ def pg_has_memory_leak():
 if pg_has_memory_leak():
     print('[INFO] This version of pygame has a memory leak'
           ' but we have fixed this from the python code, see issue #3532', file=sys.stderr)
+    MemLeaks.dist_to = True
 
     def dist_squared_to(a: Vec2 | Sequence[float], b: Vec2 | Sequence[float]):
         # convert to vectors as issue doesn't happen with vectors
