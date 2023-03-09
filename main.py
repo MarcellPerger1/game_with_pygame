@@ -4,15 +4,13 @@ import cProfile
 import random
 import time
 import tracemalloc
-from math import inf
 from typing import Any, NoReturn, Literal
 
 import pygame
 
 from util import option
-from pg_util import rect_from_size, render_text
+from pg_util import rect_from_size, render_text, nearest_of_group
 from containers import HasRect
-from pygame_patches import leaks
 from trigger_once import trigger_once
 from mem_profile import MemProf
 
@@ -222,29 +220,6 @@ if __name__ == '__main__':
     perf_mgr = PerfMgr()
     enemy_spawner = EnemySpawnMgr()
     print('Hello world')
-
-    if leaks.dist_to:
-        def nearest_of_group(pos: Vec2, group: pg.sprite.AbstractGroup):
-            min_dist = inf
-            sprite = None
-            for s in group.sprites():
-                c = s.rect.center
-                # leak doesn't occur with just vectors
-                dist = pos.distance_squared_to(Vec2(c))
-                if dist < min_dist:
-                    min_dist = dist
-                    sprite = s
-            return sprite
-    else:
-        def nearest_of_group(pos: Vec2, group: pg.sprite.AbstractGroup):
-            min_dist = inf
-            sprite = None
-            for s in group.sprites():
-                dist = pos.distance_squared_to(s.rect.center)
-                if dist < min_dist:
-                    min_dist = dist
-                    sprite = s
-            return sprite
 
 
     class EveryNTicks:

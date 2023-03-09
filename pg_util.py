@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from math import inf
+
 import pygame as pg
 from pygame import Vector2 as Vec2
+
+from pygame_patches import leaks
 
 
 def rect_from_size(sz: Vec2, **kwargs):
@@ -37,3 +41,27 @@ def render_text(font: pg.font.Font, text: str, antialias=True, color='black', bg
         dest.blit(src, dest_rect)
         y0 += h
     return dest
+
+
+if leaks.dist_to:
+    def nearest_of_group(pos: Vec2, group: pg.sprite.AbstractGroup):
+        min_dist = inf
+        sprite = None
+        for s in group.sprites():
+            c = s.rect.center
+            # leak doesn't occur with just vectors
+            dist = pos.distance_squared_to(Vec2(c))
+            if dist < min_dist:
+                min_dist = dist
+                sprite = s
+        return sprite
+else:
+    def nearest_of_group(pos: Vec2, group: pg.sprite.AbstractGroup):
+        min_dist = inf
+        sprite = None
+        for s in group.sprites():
+            dist = pos.distance_squared_to(s.rect.center)
+            if dist < min_dist:
+                min_dist = dist
+                sprite = s
+        return sprite
