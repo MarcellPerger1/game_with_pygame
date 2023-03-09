@@ -29,9 +29,11 @@ def pg_has_memory_leak():
             unsafe_PyDecref(c)
     return did_leak
 
+
 if pg_has_memory_leak():
     print('[INFO] This version of pygame has a memory leak'
           ' but we have fixed this from the python code, see issue #3532', file=sys.stderr)
+
     def dist_squared_to(a: Vec2 | Sequence[float], b: Vec2 | Sequence[float]):
         # convert to vectors as issue doesn't happen with vectors
         return Vec2(a).distance_squared_to(Vec2(b))

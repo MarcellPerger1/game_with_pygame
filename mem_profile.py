@@ -60,7 +60,7 @@ class MemProf:
 
     def take_snapshot(self):
         if self.debug_memory:
-            s =  tracemalloc.take_snapshot()
+            s = tracemalloc.take_snapshot()
         else:
             s = tracemalloc.Snapshot([], 0)
         s.is_null = self.debug_memory

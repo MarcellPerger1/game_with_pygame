@@ -8,6 +8,7 @@ class HasRect:
     def __init__(self, rect: pg.Rect):
         self.rect = rect
 
+
 class HasImage:
     def __init__(self, image: pg.Surface):
         self.image = image
