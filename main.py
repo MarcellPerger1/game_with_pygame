@@ -198,6 +198,7 @@ class Game:
         print('[INFO] Initializing groups')
         # todo should use LayeredUpdates / LayeredDirty
         self.root_group = pg.sprite.RenderUpdates()
+        self.enemies = pg.sprite.Group()
 
     def _init_screen(self):
         print('[INFO] Initializing window')
@@ -338,7 +339,7 @@ if __name__ == '__main__':
 
         def update(self, *args: Any, **kwargs: Any) -> None:
             if self.can_shoot():
-                target: Enemy = nearest_of_group(self.pos, enemies)
+                target: Enemy = nearest_of_group(self.pos, game.enemies)
                 if target is not None and self.can_shoot_enemy(target):
                     Bullet(self.pos, target.pos)
                     self.shot_on_tick = game.curr_tick
@@ -429,7 +430,7 @@ if __name__ == '__main__':
             self.kill()
 
         def update(self, *args: Any, **kwargs: Any) -> None:
-            enemies_hit = pg.sprite.spritecollide(self, enemies, False)
+            enemies_hit = pg.sprite.spritecollide(self, game.enemies, False)
             if len(enemies_hit) != 0:
                 # only hit first one
                 enemy: CommonEnemy = enemies_hit[0]
@@ -445,7 +446,7 @@ if __name__ == '__main__':
         def __init__(self, pos: Vec2,
                      *groups: pg.sprite.AbstractGroup,
                      is_in_enemies=True, **kwargs):
-            groups = (*groups, enemies) if is_in_enemies else groups
+            groups = (*groups, game.enemies) if is_in_enemies else groups
             super(CommonEnemy, self).__init__(pos, *groups, **kwargs)
 
         def on_hit_by_bullet(self, bullet: Bullet):
@@ -615,7 +616,7 @@ if __name__ == '__main__':
     try:
         game = Game()
         # groups
-        enemies = pg.sprite.Group()
+
         turret_range_overlay = pg.sprite.Group()
         bullets = pg.sprite.Group()
         turrets = turrets_group = pg.sprite.Group()
