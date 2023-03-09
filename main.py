@@ -173,6 +173,7 @@ class Game:
         self._init_timing()
         self._init_fonts()
         self._init_groups()
+        self._init_screen()
 
     def _init_pygame(self):
         print('[INFO] Initializing modules')
@@ -197,6 +198,10 @@ class Game:
         print('[INFO] Initializing groups')
         # todo should use LayeredUpdates / LayeredDirty
         self.root_group = pg.sprite.RenderUpdates()
+
+    def _init_screen(self):
+        print('[INFO] Initializing window')
+        self.screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
 
     @property
     def ticks(self):
@@ -381,7 +386,7 @@ if __name__ == '__main__':
         @classmethod
         def make_overlay_surf(cls, remake_force=False):
             if cls.overlays_surf is None or remake_force:
-                cls.overlays_surf = pg.Surface(screen.get_size(), pg.SRCALPHA)
+                cls.overlays_surf = pg.Surface(game.screen.get_size(), pg.SRCALPHA)
 
         @classmethod
         def draw_all(cls):
@@ -400,7 +405,7 @@ if __name__ == '__main__':
 
         @classmethod
         def blit_all(cls):
-            return screen.blit(cls.overlays_surf, screen.get_rect())
+            return game.screen.blit(cls.overlays_surf, game.screen.get_rect())
 
 
     class Bullet(CommonSprite):
@@ -486,7 +491,7 @@ if __name__ == '__main__':
         def __init__(self, text: str):
             super().__init__(game.root_group)
             self.text = text
-            self.pos = screen.get_rect().center
+            self.pos = game.screen.get_rect().center
             self.surf = self.image = render_text(
                 game.fonts.huge, self.text, color='black', justify='center')
             self.rect = self.surf.get_rect(center=self.pos)
@@ -516,7 +521,7 @@ if __name__ == '__main__':
 
         def __init__(self, text: str):
             super().__init__(game.root_group)
-            self.topright = Vec2(screen.get_width() - 5, 5)
+            self.topright = Vec2(game.screen.get_width() - 5, 5)
             self.set_text(text)
 
         def set_text(self, text: str):
@@ -588,11 +593,11 @@ if __name__ == '__main__':
             on_post_tick()
         # draw objects
         if USE_FLIP:
-            game.root_group.draw(screen)
+            game.root_group.draw(game.screen)
             draw_turret_overlays()
             pg.display.flip()
         else:
-            dirty = game.root_group.draw(screen)
+            dirty = game.root_group.draw(game.screen)
             draw_turret_overlays()
             dirty += dirty_this_frame
             pg.display.update(dirty)
@@ -609,7 +614,6 @@ if __name__ == '__main__':
     try:
         game = Game()
         # other vars
-        screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
         dirty_this_frame: list[pg.Rect] = []
         # groups
         enemies = pg.sprite.Group()
@@ -623,13 +627,13 @@ if __name__ == '__main__':
         turrets_text = InvText("Turrets: 0")
         fps_text = FpsText("FPS: N/A")
         # initialise screen
-        screen.fill((255, 255, 255))
+        game.screen.fill((255, 255, 255))
         pg.display.flip()
         # main loop
         while True:
             perf_mgr.curr_cpu_profile = None
             _t0 = time.perf_counter()
-            screen.fill((255, 255, 255))
+            game.screen.fill((255, 255, 255))
             dirty_this_frame.clear()
             handle_events()
             tick_with_prof(perf_mgr.curr_cpu_profile)
