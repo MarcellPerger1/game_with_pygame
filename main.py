@@ -65,7 +65,7 @@ class CommonSprite(pg.sprite.Sprite):
         self.in_root = option(in_root, self.in_root)
         self.pos = pos
         self.size = option(size, self.size)
-        groups = (root_group, *groups) if self.in_root else groups
+        groups = (game.root_group, *groups) if self.in_root else groups
         pg.sprite.Sprite.__init__(self, *groups)
         if self.size is None:
             raise self._err_missing_size("__init__")
@@ -172,6 +172,7 @@ class Game:
         self._init_pygame()
         self._init_timing()
         self._init_fonts()
+        self._init_groups()
 
     def _init_pygame(self):
         print('[INFO] Initializing modules')
@@ -191,6 +192,11 @@ class Game:
         print('[INFO] Initializing clock')
         self.curr_tick = 0
         self.clock = pg.time.Clock()
+
+    def _init_groups(self):
+        print('[INFO] Initializing groups')
+        # todo should use LayeredUpdates / LayeredDirty
+        self.root_group = pg.sprite.RenderUpdates()
 
     @property
     def ticks(self):
@@ -285,7 +291,7 @@ if __name__ == '__main__':
         size = Vec2(12, 12)  # 'standard' size for a collectable; override this
 
         def __init__(self, pos: Vec2):
-            super().__init__(pos, root_group)
+            super().__init__(pos)
 
         # noinspection PyMethodMayBeStatic
         def on_collect(self):
@@ -478,7 +484,7 @@ if __name__ == '__main__':
 
     class GameOver(pygame.sprite.Sprite):
         def __init__(self, text: str):
-            super().__init__(root_group)
+            super().__init__(game.root_group)
             self.text = text
             self.pos = screen.get_rect().center
             self.surf = self.image = render_text(
@@ -492,7 +498,7 @@ if __name__ == '__main__':
         rect: pg.Rect
 
         def __init__(self, text: str):
-            super().__init__(root_group)
+            super().__init__(game.root_group)
             self.topleft = Vec2(5, 5)
             self.set_text(text)
 
@@ -509,7 +515,7 @@ if __name__ == '__main__':
         rect: pg.Rect
 
         def __init__(self, text: str):
-            super().__init__(root_group)
+            super().__init__(game.root_group)
             self.topright = Vec2(screen.get_width() - 5, 5)
             self.set_text(text)
 
@@ -575,18 +581,18 @@ if __name__ == '__main__':
         # do tick
         if not player.is_dead:
             # Turret._enemy_positions = None
-            root_group.update()
+            game.root_group.update()
             if not SHOW_BULLETS:
                 # not in root_group so need to send update in own group
                 bullets.update()
             on_post_tick()
         # draw objects
         if USE_FLIP:
-            root_group.draw(screen)
+            game.root_group.draw(screen)
             draw_turret_overlays()
             pg.display.flip()
         else:
-            dirty = root_group.draw(screen)
+            dirty = game.root_group.draw(screen)
             draw_turret_overlays()
             dirty += dirty_this_frame
             pg.display.update(dirty)
@@ -606,7 +612,6 @@ if __name__ == '__main__':
         screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
         dirty_this_frame: list[pg.Rect] = []
         # groups
-        root_group = pg.sprite.RenderUpdates()
         enemies = pg.sprite.Group()
         turret_range_overlay = pg.sprite.Group()
         bullets = pg.sprite.Group()
