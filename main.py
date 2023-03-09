@@ -201,6 +201,7 @@ class Game:
         self.enemies = pg.sprite.Group()
         self.turret_range_overlays = pg.sprite.Group()
         self.bullets = pg.sprite.Group()
+        self.turrets = pg.sprite.Group()
 
     def _init_screen(self):
         print('[INFO] Initializing window')
@@ -282,7 +283,7 @@ if __name__ == '__main__':
             if self.turrets > 0:
                 mouse_pos = Vec2(pg.mouse.get_pos())
                 if not pg.sprite.spritecollide(
-                        HasRect(Turret.get_virtual_rect(mouse_pos)), turrets_group, False):
+                        HasRect(Turret.get_virtual_rect(mouse_pos)), game.turrets, False):
                     Turret(mouse_pos)
                     self.turrets -= 1
                     update_turrets_text()
@@ -325,7 +326,7 @@ if __name__ == '__main__':
 
         def __init__(self, pos: Vec2, *groups: pg.sprite.AbstractGroup,
                      interval: int = TURRET_INTERVAL):
-            super().__init__(pos, turrets, *groups)
+            super().__init__(pos, game.turrets, *groups)
             self.interval = interval
             self.shot_on_tick = None
             if SHOW_TURRET_RANGE:
@@ -617,8 +618,6 @@ if __name__ == '__main__':
 
     try:
         game = Game()
-        # groups
-        turrets = turrets_group = pg.sprite.Group()
         # objects
         player = Player()
         TurretItem(Vec2(400, 600))
