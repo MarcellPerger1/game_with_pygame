@@ -202,6 +202,7 @@ class Game:
     def _init_screen(self):
         print('[INFO] Initializing window')
         self.screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
+        self.dirty_this_frame: list[pg.Rect] = []
 
     @property
     def ticks(self):
@@ -374,7 +375,7 @@ if __name__ == '__main__':
             pass  # already draw when surface created
 
         def on_create(self):
-            dirty_this_frame.append(self.rect)
+            game.dirty_this_frame.append(self.rect)
             self.request_redraw(self)
 
         @classmethod
@@ -599,7 +600,7 @@ if __name__ == '__main__':
         else:
             dirty = game.root_group.draw(game.screen)
             draw_turret_overlays()
-            dirty += dirty_this_frame
+            dirty += game.dirty_this_frame
             pg.display.update(dirty)
             del dirty
 
@@ -613,8 +614,6 @@ if __name__ == '__main__':
 
     try:
         game = Game()
-        # other vars
-        dirty_this_frame: list[pg.Rect] = []
         # groups
         enemies = pg.sprite.Group()
         turret_range_overlay = pg.sprite.Group()
@@ -634,7 +633,7 @@ if __name__ == '__main__':
             perf_mgr.curr_cpu_profile = None
             _t0 = time.perf_counter()
             game.screen.fill((255, 255, 255))
-            dirty_this_frame.clear()
+            game.dirty_this_frame.clear()
             handle_events()
             tick_with_prof(perf_mgr.curr_cpu_profile)
             _t1 = time.perf_counter()
