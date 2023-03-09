@@ -200,6 +200,7 @@ class Game:
         self.root_group = pg.sprite.RenderUpdates()
         self.enemies = pg.sprite.Group()
         self.turret_range_overlays = pg.sprite.Group()
+        self.bullets = pg.sprite.Group()
 
     def _init_screen(self):
         print('[INFO] Initializing window')
@@ -415,7 +416,7 @@ if __name__ == '__main__':
         size = Vec2(6, 6)
 
         def __init__(self, pos: Vec2, target: Vec2, *groups: pg.sprite.AbstractGroup):
-            super().__init__(pos, bullets, *groups, in_root=SHOW_BULLETS)
+            super().__init__(pos, game.bullets, *groups, in_root=SHOW_BULLETS)
             self.target = target
 
         def draw_sprite(self):
@@ -592,7 +593,7 @@ if __name__ == '__main__':
             game.root_group.update()
             if not SHOW_BULLETS:
                 # not in root_group so need to send update in own group
-                bullets.update()
+                game.bullets.update()
             on_post_tick()
         # draw objects
         if USE_FLIP:
@@ -617,7 +618,6 @@ if __name__ == '__main__':
     try:
         game = Game()
         # groups
-        bullets = pg.sprite.Group()
         turrets = turrets_group = pg.sprite.Group()
         # objects
         player = Player()
