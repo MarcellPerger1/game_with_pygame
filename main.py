@@ -238,6 +238,10 @@ class Game:
         self.clock.tick(FPS)
         self.curr_tick += 1
 
+    def do_frame_inner(self):
+        game.do_tick()
+        game.draw_objects()
+
     def draw_objects(self):
         if USE_FLIP:
             self.root_group.draw(self.screen)
@@ -626,15 +630,11 @@ if __name__ == '__main__':
                 if DEBUG_CPU:
                     perf_mgr.curr_cpu_profile = cProfile.Profile()
 
-    def tick_main():
-        game.do_tick()
-        game.draw_objects()
-
     def tick_with_prof(p: cProfile.Profile | None):
         if not p:
-            return tick_main()
+            return game.do_frame_inner()
         with p:
-            tick_main()
+            game.do_frame_inner()
         p.dump_stats('game_perf.prof')
 
 
