@@ -125,7 +125,7 @@ class EnemySpawnMgr:
         enemies_this_tick = 0
         while (self.next_enemy_time <= game.curr_tick
                and enemies_this_tick < MAX_ENEMIES_PER_TICK):
-            spawn_enemy()
+            self.spawn_enemy()
             self.next_enemy_time += self.enemy_spawn_interval
             enemies_this_tick += 1
         # if it would've spawned an extra enemy, set the next enemy time to the current time
@@ -150,6 +150,16 @@ class EnemySpawnMgr:
         self.enemy_spawn_interval *= self.get_interval_decrease()
         if self.enemy_spawn_interval < MIN_SPAWN_INTERVAL:
             self.enemy_spawn_interval = MIN_SPAWN_INTERVAL
+
+    # might use interval to determine health, etc.
+    # noinspection PyMethodMayBeStatic
+    def spawn_enemy(self):
+        angle = random.uniform(0, 360)
+        distance = random.uniform(250, 500)
+        at = Vec2()
+        at.from_polar((distance, angle))
+        at += Vec2(player.pos)
+        Enemy(at)
 
 
 class Fonts:
@@ -606,15 +616,6 @@ if __name__ == '__main__':
         def update(self, *args: Any, **kwargs: Any) -> None:
             if game.curr_tick % 5 == 1:
                 self.set_text(f'FPS: {game.clock.get_fps():.2f}')
-
-
-    def spawn_enemy():
-        angle = random.uniform(0, 360)
-        distance = random.uniform(250, 500)
-        at = Vec2()
-        at.from_polar((distance, angle))
-        at += Vec2(player.pos)
-        Enemy(at)
 
 
     def on_post_tick():
