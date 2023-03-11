@@ -663,9 +663,9 @@ if __name__ == '__main__':
         game.player.on_kill_enemy(enemy, bullet)
 
 
+    game = Game()
+    game.init()
     try:
-        game = Game()
-        game.init()
         game.mainloop()
     except PGExit:
         pygame.quit()
