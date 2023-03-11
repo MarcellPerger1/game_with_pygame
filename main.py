@@ -206,6 +206,10 @@ class Game:
         self.screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
         self.dirty_this_frame: list[pg.Rect] = []
 
+    def init_frame(self):
+        self.screen.fill((255, 255, 255))
+        self.dirty_this_frame.clear()
+
     @property
     def ticks(self):
         return self.curr_tick
@@ -618,8 +622,7 @@ if __name__ == '__main__':
         while True:
             perf_mgr.curr_cpu_profile = None
             _t0 = time.perf_counter()
-            game.screen.fill((255, 255, 255))
-            game.dirty_this_frame.clear()
+            game.init_frame()
             handle_events()
             tick_with_prof(perf_mgr.curr_cpu_profile)
             _t1 = time.perf_counter()
