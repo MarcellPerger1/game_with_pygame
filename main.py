@@ -643,9 +643,6 @@ if __name__ == '__main__':
         initial_enemy = Enemy(Vec2(50, 655), immobile=True)
         turrets_text = InvText("Turrets: 0")
         fps_text = FpsText("FPS: N/A")
-        # initialise screen
-        game.screen.fill((255, 255, 255))
-        pg.display.flip()
         # main loop
         while True:
             game.do_one_frame()
