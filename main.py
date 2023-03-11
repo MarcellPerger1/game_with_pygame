@@ -174,7 +174,7 @@ class Game:
         self._init_timing()
         self._init_fonts()
         self._init_groups()
-        self._init_screen()
+        self._init_window()
 
     def _init_pygame(self):
         print('[INFO] Initializing modules')
@@ -204,10 +204,16 @@ class Game:
         self.bullets = pg.sprite.Group()
         self.turrets = pg.sprite.Group()
 
-    def _init_screen(self):
+    def _init_window(self):
         print('[INFO] Initializing window')
         self.screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
         self.dirty_this_frame: list[pg.Rect] = []
+        self._clear_window()
+
+    def _clear_window(self):
+        print('[INFO] Clearing window')
+        self.screen.fill((255, 255, 255))
+        pg.display.flip()
 
     def do_one_frame(self):
         perf_mgr.curr_cpu_profile = None
