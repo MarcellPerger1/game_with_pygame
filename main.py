@@ -158,7 +158,7 @@ class EnemySpawnMgr:
         distance = random.uniform(250, 500)
         at = Vec2()
         at.from_polar((distance, angle))
-        at += Vec2(player.pos)
+        at += Vec2(game.player.pos)
         Enemy(at)
 
 
@@ -179,7 +179,7 @@ class Game:
     frame_end: float
     frame_time: float
 
-    def __init__(self, init=True):
+    def __init__(self, init=False):
         self.is_init = False
         if init:
             self.init()
@@ -189,6 +189,7 @@ class Game:
         self._init_timing()
         self._init_fonts()
         self._init_groups()
+        self._init_objects()
         self._init_window()
 
     def _init_pygame(self):
@@ -228,6 +229,10 @@ class Game:
         print('[INFO] Clearing window')
         self.screen.fill((255, 255, 255))
         pg.display.flip()
+
+    def _init_objects(self):
+        print('[INFO] Initializing objects')
+        self.player = Player(Vec2(700, 400))
 
     def do_one_frame(self):
         perf_mgr.curr_cpu_profile = None
@@ -275,7 +280,7 @@ class Game:
             pg.display.update(dirty)
 
     def do_tick(self):
-        if player.is_dead:
+        if game.player.is_dead:
             return
         self.root_group.update()
         if not SHOW_BULLETS:
@@ -382,7 +387,7 @@ if __name__ == '__main__':
             """This method is called when this has been collected (after being kill-ed)"""
 
         def update(self, *args: Any, **kwargs: Any) -> None:
-            if pg.sprite.collide_rect(self, player):
+            if pg.sprite.collide_rect(self, game.player):
                 self.kill()
                 self.on_collect()
 
@@ -391,7 +396,7 @@ if __name__ == '__main__':
             pg.draw.rect(self.surf, 'darkolivegreen3', self.surf.get_rect())
 
         def on_collect(self):
-            player.turrets += 1
+            game.player.turrets += 1
             update_turrets_text()
 
 
@@ -532,13 +537,13 @@ if __name__ == '__main__':
 
         # noinspection PyMethodMayBeStatic
         def on_collide_player(self):
-            player.is_dead = True
-            GameOver(f'Game Over\nScore: {player.enemies_killed}')
+            game.player.is_dead = True
+            GameOver(f'Game Over\nScore: {game.player.enemies_killed}')
             print('You died')
 
         def update(self, *args: Any, **kwargs: Any) -> None:
             """This update function handles killing player on contact"""
-            if pg.sprite.collide_rect(self, player):
+            if pg.sprite.collide_rect(self, game.player):
                 self.on_collide_player()
 
     class Enemy(CommonEnemy):
@@ -554,7 +559,7 @@ if __name__ == '__main__':
         def update(self, *args: Any, **kwargs: Any) -> None:
             super().update(*args, **kwargs)
             if not self.immobile:
-                self.pos = self.pos.move_towards(player.pos, ENEMY_SPEED)
+                self.pos = self.pos.move_towards(game.player.pos, ENEMY_SPEED)
                 self.rect.center = self.pos
 
     class EnemyWithHealth(CommonEnemy):
@@ -626,7 +631,7 @@ if __name__ == '__main__':
 
 
     def update_turrets_text():
-        turrets_text.set_text(f'Turrets: {player.turrets}')
+        turrets_text.set_text(f'Turrets: {game.player.turrets}')
 
 
     def draw_turret_overlays():
@@ -636,13 +641,12 @@ if __name__ == '__main__':
 
     def on_kill_enemy(enemy, bullet):
         enemy_spawner.increment_interval_once()
-        player.on_kill_enemy(enemy, bullet)
+        game.player.on_kill_enemy(enemy, bullet)
 
 
     try:
         game = Game()
-        # objects
-        player = Player(Vec2(700, 400))
+        game.init()
         TurretItem(Vec2(400, 600))
         initial_enemy = Enemy(Vec2(50, 655), immobile=True)
         turrets_text = InvText("Turrets: 0")
