@@ -210,6 +210,10 @@ class Game:
         self.screen.fill((255, 255, 255))
         self.dirty_this_frame.clear()
 
+    def wait_for_next_tick(self):
+        self.clock.tick(FPS)
+        self.curr_tick += 1
+
     @property
     def ticks(self):
         return self.curr_tick
@@ -629,9 +633,7 @@ if __name__ == '__main__':
             if game.curr_tick % 10 == 1:
                 print(f'Update took: {(_t1 - _t0) * 1000:.2f}ms')
                 print(f'FPS: {game.clock.get_fps():.2f}')
-            # update clock
-            game.clock.tick(FPS)
-            game.curr_tick += 1
+            game.wait_for_next_tick()
     except PGExit:
         pygame.quit()
     if perf_mgr.mem_snapshot and DEBUG_MEMORY:
