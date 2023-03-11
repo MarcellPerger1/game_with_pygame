@@ -234,6 +234,7 @@ class Game:
         print('[INFO] Initializing objects')
         self.player = Player(Vec2(700, 400))
         TurretItem(Vec2(400, 600))
+        self.initial_enemy = Enemy(Vec2(50, 655), immobile=True)
 
     def do_one_frame(self):
         perf_mgr.curr_cpu_profile = None
@@ -628,7 +629,7 @@ if __name__ == '__main__':
         @trigger_once
         def place_turret(cls):
             enemy_spawner.is_enabled = True
-            initial_enemy.immobile = False
+            game.initial_enemy.immobile = False
 
 
     def update_turrets_text():
@@ -648,7 +649,6 @@ if __name__ == '__main__':
     try:
         game = Game()
         game.init()
-        initial_enemy = Enemy(Vec2(50, 655), immobile=True)
         turrets_text = InvText("Turrets: 0")
         fps_text = FpsText("FPS: N/A")
         # main loop
