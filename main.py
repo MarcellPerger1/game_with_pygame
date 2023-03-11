@@ -249,6 +249,15 @@ class Game:
             dirty += self.dirty_this_frame
             pg.display.update(dirty)
 
+    def do_tick(self):
+        if player.is_dead:
+            return
+        self.root_group.update()
+        if not SHOW_BULLETS:
+            # not in root_group so need to send update in own group
+            self.bullets.update()
+        on_post_tick()
+
     @property
     def ticks(self):
         return self.curr_tick
@@ -618,14 +627,7 @@ if __name__ == '__main__':
                     perf_mgr.curr_cpu_profile = cProfile.Profile()
 
     def tick_main():
-        # do tick
-        if not player.is_dead:
-            # Turret._enemy_positions = None
-            game.root_group.update()
-            if not SHOW_BULLETS:
-                # not in root_group so need to send update in own group
-                game.bullets.update()
-            on_post_tick()
+        game.do_tick()
         game.draw_objects()
 
     def tick_with_prof(p: cProfile.Profile | None):
