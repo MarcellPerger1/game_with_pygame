@@ -230,13 +230,24 @@ class Game:
     def after_frame(self):
         self.frame_end = time.perf_counter()
         self.frame_time = self.frame_end - self.frame_start
-        if game.curr_tick % 10 == 1:
+        if self.curr_tick % 10 == 1:
             print(f'Update took: {self.frame_time * 1000:.2f}ms')
             print(f'FPS: {self.clock.get_fps():.2f}')
 
     def wait_for_next_frame(self):
         self.clock.tick(FPS)
         self.curr_tick += 1
+
+    def draw_objects(self):
+        if USE_FLIP:
+            self.root_group.draw(self.screen)
+            draw_turret_overlays()
+            pg.display.flip()
+        else:
+            dirty = self.root_group.draw(self.screen)
+            draw_turret_overlays()
+            dirty += self.dirty_this_frame
+            pg.display.update(dirty)
 
     @property
     def ticks(self):
@@ -615,17 +626,7 @@ if __name__ == '__main__':
                 # not in root_group so need to send update in own group
                 game.bullets.update()
             on_post_tick()
-        # draw objects
-        if USE_FLIP:
-            game.root_group.draw(game.screen)
-            draw_turret_overlays()
-            pg.display.flip()
-        else:
-            dirty = game.root_group.draw(game.screen)
-            draw_turret_overlays()
-            dirty += game.dirty_this_frame
-            pg.display.update(dirty)
-            del dirty
+        game.draw_objects()
 
     def tick_with_prof(p: cProfile.Profile | None):
         if not p:
