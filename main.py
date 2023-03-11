@@ -238,6 +238,11 @@ class Game:
         self.turrets_text = InvText("Turrets: 0")
         self.fps_text = FpsText("FPS: N/A")
 
+    def mainloop(self):
+        while True:
+            self.do_one_frame()
+            self.wait_for_next_frame()
+
     def do_one_frame(self):
         perf_mgr.curr_cpu_profile = None
         self.init_frame()
@@ -651,10 +656,7 @@ if __name__ == '__main__':
     try:
         game = Game()
         game.init()
-        # main loop
-        while True:
-            game.do_one_frame()
-            game.wait_for_next_frame()
+        game.mainloop()
     except PGExit:
         pygame.quit()
     if perf_mgr.mem_snapshot and DEBUG_MEMORY:
