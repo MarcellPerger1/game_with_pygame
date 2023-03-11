@@ -235,6 +235,7 @@ class Game:
         self.player = Player(Vec2(700, 400))
         TurretItem(Vec2(400, 600))
         self.initial_enemy = Enemy(Vec2(50, 655), immobile=True)
+        self.turrets_text = InvText("Turrets: 0")
 
     def do_one_frame(self):
         perf_mgr.curr_cpu_profile = None
@@ -633,7 +634,7 @@ if __name__ == '__main__':
 
 
     def update_turrets_text():
-        turrets_text.set_text(f'Turrets: {game.player.turrets}')
+        game.turrets_text.set_text(f'Turrets: {game.player.turrets}')
 
 
     def draw_turret_overlays():
@@ -649,7 +650,6 @@ if __name__ == '__main__':
     try:
         game = Game()
         game.init()
-        turrets_text = InvText("Turrets: 0")
         fps_text = FpsText("FPS: N/A")
         # main loop
         while True:
