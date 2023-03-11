@@ -197,6 +197,7 @@ class Game:
         self._init_fonts()
         self._init_groups()
         self._init_window()
+        self._init_components()
         self._init_objects()
 
     def _init_pygame(self):
@@ -244,6 +245,10 @@ class Game:
         self.initial_enemy = Enemy(Vec2(50, 655), immobile=True)
         self.turrets_text = InvText("Turrets: 0")
         self.fps_text = FpsText("FPS: N/A")
+
+    def _init_components(self):
+        print('[INFO] Initializing components')
+        self.enemy_spawner = EnemySpawnMgr()
 
     def mainloop(self):
         while True:
@@ -325,7 +330,6 @@ class Game:
 
 if __name__ == '__main__':
     perf_mgr = PerfMgr()
-    enemy_spawner = EnemySpawnMgr()
     print('Hello world')
 
 
@@ -635,13 +639,13 @@ if __name__ == '__main__':
 
 
     def on_post_tick():
-        enemy_spawner.handle_enemy_spawns()
+        game.enemy_spawner.handle_enemy_spawns()
 
     class Tutorial:
         @classmethod
         @trigger_once
         def place_turret(cls):
-            enemy_spawner.is_enabled = True
+            game.enemy_spawner.is_enabled = True
             game.initial_enemy.immobile = False
 
 
@@ -655,7 +659,7 @@ if __name__ == '__main__':
 
 
     def on_kill_enemy(enemy, bullet):
-        enemy_spawner.increment_interval_once()
+        game.enemy_spawner.increment_interval_once()
         game.player.on_kill_enemy(enemy, bullet)
 
 
