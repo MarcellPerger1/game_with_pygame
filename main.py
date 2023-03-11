@@ -189,8 +189,8 @@ class Game:
         self._init_timing()
         self._init_fonts()
         self._init_groups()
-        self._init_objects()
         self._init_window()
+        self._init_objects()
 
     def _init_pygame(self):
         print('[INFO] Initializing modules')
@@ -236,6 +236,7 @@ class Game:
         TurretItem(Vec2(400, 600))
         self.initial_enemy = Enemy(Vec2(50, 655), immobile=True)
         self.turrets_text = InvText("Turrets: 0")
+        self.fps_text = FpsText("FPS: N/A")
 
     def do_one_frame(self):
         perf_mgr.curr_cpu_profile = None
@@ -650,7 +651,6 @@ if __name__ == '__main__':
     try:
         game = Game()
         game.init()
-        fps_text = FpsText("FPS: N/A")
         # main loop
         while True:
             game.do_one_frame()
