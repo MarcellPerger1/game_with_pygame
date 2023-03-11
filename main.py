@@ -289,10 +289,6 @@ class Game:
                 if DEBUG_MEMORY:
                     perf_mgr.mem_snapshot = mem_prof.take_snapshot()
                 raise PGExit
-            if event.type == pg.KEYDOWN and event.key == pg.K_t:
-                player.turrets += 30
-                update_turrets_text()
-                enemy_spawner.enemy_spawn_interval *= 0.3
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
                 if DEBUG_CPU:
                     perf_mgr.curr_cpu_profile = cProfile.Profile()
