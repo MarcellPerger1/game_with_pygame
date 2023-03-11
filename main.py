@@ -221,7 +221,7 @@ class Game:
             print(f'Update took: {self.frame_time * 1000:.2f}ms')
             print(f'FPS: {self.clock.get_fps():.2f}')
 
-    def wait_for_next_tick(self):
+    def wait_for_next_frame(self):
         self.clock.tick(FPS)
         self.curr_tick += 1
 
@@ -640,7 +640,7 @@ if __name__ == '__main__':
             handle_events()
             tick_with_prof(perf_mgr.curr_cpu_profile)
             game.after_frame()
-            game.wait_for_next_tick()
+            game.wait_for_next_frame()
     except PGExit:
         pygame.quit()
     if perf_mgr.mem_snapshot and DEBUG_MEMORY:
