@@ -156,6 +156,11 @@ class Fonts:
     huge: pygame.font.Font
     monospace: pygame.font.Font
 
+    @classmethod
+    def init(cls):
+        cls.huge = pygame.font.SysFont('Helvetica', 200, bold=True)
+        cls.monospace = pygame.font.SysFont('monospace', 18)
+
 
 # noinspection PyMethodMayBeStatic
 class Game:
@@ -183,10 +188,9 @@ class Game:
 
     def _init_fonts(self):
         print('[INFO] Initializing fonts')
-        self.fonts = Fonts()
         t0 = time.perf_counter()
-        self.fonts.huge = pygame.font.SysFont('Helvetica', 200, bold=True)
-        self.fonts.monospace = pygame.font.SysFont('monospace', 18)
+        self.fonts = Fonts()
+        self.fonts.init()
         t1 = time.perf_counter()
         print(f'[INFO] Initialized fonts in {t1 - t0:.2f}s')
 
