@@ -209,6 +209,13 @@ class Game:
         self.screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
         self.dirty_this_frame: list[pg.Rect] = []
 
+    def do_one_frame(self):
+        perf_mgr.curr_cpu_profile = None
+        self.init_frame()
+        handle_events()
+        tick_with_prof(perf_mgr.curr_cpu_profile)
+        self.after_frame()
+
     def init_frame(self):
         self.screen.fill((255, 255, 255))
         self.dirty_this_frame.clear()
@@ -635,11 +642,7 @@ if __name__ == '__main__':
         pg.display.flip()
         # main loop
         while True:
-            perf_mgr.curr_cpu_profile = None
-            game.init_frame()
-            handle_events()
-            tick_with_prof(perf_mgr.curr_cpu_profile)
-            game.after_frame()
+            game.do_one_frame()
             game.wait_for_next_frame()
     except PGExit:
         pygame.quit()
