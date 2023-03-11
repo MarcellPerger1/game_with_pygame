@@ -106,6 +106,13 @@ class PerfMgr:
     def __init__(self, memory=DEBUG_MEMORY, cpu=DEBUG_CPU):
         self.do_memory = memory
         self.do_cpu = cpu
+        self.mem_prof = MemProf(self.do_memory)
+
+    def take_snapshot(self):
+        self.mem_snapshot = self.mem_prof.take_snapshot()
+
+    def print_snapshot(self, *args, **kwargs):
+        self.mem_prof.display_top(self.mem_snapshot, *args, **kwargs)
 
 
 class EnemySpawnMgr:
@@ -301,7 +308,7 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 if DEBUG_MEMORY:
-                    perf_mgr.mem_snapshot = mem_prof.take_snapshot()
+                    perf_mgr.take_snapshot()
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
                 if DEBUG_CPU:
@@ -317,7 +324,6 @@ class Game:
 
 
 if __name__ == '__main__':
-    mem_prof = MemProf(DEBUG_MEMORY)
     perf_mgr = PerfMgr()
     enemy_spawner = EnemySpawnMgr()
     print('Hello world')
@@ -659,5 +665,5 @@ if __name__ == '__main__':
         game.mainloop()
     except PGExit:
         pygame.quit()
-    if perf_mgr.mem_snapshot and DEBUG_MEMORY:
-        mem_prof.display_top(perf_mgr.mem_snapshot)
+    if perf_mgr.mem_snapshot:
+        perf_mgr.print_snapshot()
