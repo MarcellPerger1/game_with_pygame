@@ -267,8 +267,8 @@ if __name__ == '__main__':
     class Player(CommonSprite):
         size = Vec2(P_RADIUS * 2, P_RADIUS * 2)
 
-        def __init__(self):
-            super().__init__(Vec2(700, 400))
+        def __init__(self, pos: Vec2):
+            super().__init__(pos)
             self.turrets = 0
             self.is_dead = False
             self.enemies_killed = 0
@@ -638,7 +638,7 @@ if __name__ == '__main__':
     try:
         game = Game()
         # objects
-        player = Player()
+        player = Player(Vec2(700, 400))
         TurretItem(Vec2(400, 600))
         initial_enemy = Enemy(Vec2(50, 655), immobile=True)
         turrets_text = InvText("Turrets: 0")
