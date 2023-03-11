@@ -249,6 +249,7 @@ class Game:
     def _init_components(self):
         print('[INFO] Initializing components')
         self.enemy_spawner = EnemySpawnMgr()
+        self.perf_mgr = PerfMgr()
 
     def mainloop(self):
         while True:
@@ -256,10 +257,10 @@ class Game:
             self.wait_for_next_frame()
 
     def do_one_frame(self):
-        perf_mgr.curr_cpu_profile = None
+        game.perf_mgr.curr_cpu_profile = None
         self.init_frame()
         self.handle_events()
-        self.frame_inner_with_prof(perf_mgr.curr_cpu_profile)
+        self.frame_inner_with_prof(game.perf_mgr.curr_cpu_profile)
         self.after_frame()
 
     def init_frame(self):
@@ -313,11 +314,11 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 if DEBUG_MEMORY:
-                    perf_mgr.take_snapshot()
+                    game.perf_mgr.take_snapshot()
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
                 if DEBUG_CPU:
-                    perf_mgr.curr_cpu_profile = cProfile.Profile()
+                    game.perf_mgr.curr_cpu_profile = cProfile.Profile()
 
     @property
     def ticks(self):
@@ -329,7 +330,6 @@ class Game:
 
 
 if __name__ == '__main__':
-    perf_mgr = PerfMgr()
     print('Hello world')
 
 
@@ -669,5 +669,5 @@ if __name__ == '__main__':
         game.mainloop()
     except PGExit:
         pygame.quit()
-    if perf_mgr.mem_snapshot:
-        perf_mgr.print_snapshot()
+    if game.perf_mgr.mem_snapshot:
+        game.perf_mgr.print_snapshot()
