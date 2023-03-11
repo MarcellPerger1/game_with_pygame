@@ -218,7 +218,7 @@ class Game:
     def do_one_frame(self):
         perf_mgr.curr_cpu_profile = None
         self.init_frame()
-        handle_events()
+        self.handle_events()
         self.frame_inner_with_prof(perf_mgr.curr_cpu_profile)
         self.after_frame()
 
@@ -268,6 +268,20 @@ class Game:
             # not in root_group so need to send update in own group
             self.bullets.update()
         on_post_tick()
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                if DEBUG_MEMORY:
+                    perf_mgr.mem_snapshot = mem_prof.take_snapshot()
+                raise PGExit
+            if event.type == pg.KEYDOWN and event.key == pg.K_t:
+                player.turrets += 30
+                update_turrets_text()
+                enemy_spawner.enemy_spawn_interval *= 0.3
+            if event.type == pg.KEYDOWN and event.key == pg.K_p:
+                if DEBUG_CPU:
+                    perf_mgr.curr_cpu_profile = cProfile.Profile()
 
     @property
     def ticks(self):
@@ -622,20 +636,6 @@ if __name__ == '__main__':
     def on_kill_enemy(enemy, bullet):
         enemy_spawner.increment_interval_once()
         player.on_kill_enemy(enemy, bullet)
-
-    def handle_events():
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                if DEBUG_MEMORY:
-                    perf_mgr.mem_snapshot = mem_prof.take_snapshot()
-                raise PGExit
-            if event.type == pg.KEYDOWN and event.key == pg.K_t:
-                player.turrets += 30
-                update_turrets_text()
-                enemy_spawner.enemy_spawn_interval *= 0.3
-            if event.type == pg.KEYDOWN and event.key == pg.K_p:
-                if DEBUG_CPU:
-                    perf_mgr.curr_cpu_profile = cProfile.Profile()
 
 
     try:
