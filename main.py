@@ -160,6 +160,9 @@ class Fonts:
 # noinspection PyMethodMayBeStatic
 class Game:
     curr_tick: int
+    frame_start: float
+    frame_end: float
+    frame_time: float
 
     def __init__(self, init=True):
         self.is_init = False
@@ -209,6 +212,14 @@ class Game:
     def init_frame(self):
         self.screen.fill((255, 255, 255))
         self.dirty_this_frame.clear()
+        self.frame_start = time.perf_counter()
+
+    def after_frame(self):
+        self.frame_end = time.perf_counter()
+        self.frame_time = self.frame_end - self.frame_start
+        if game.curr_tick % 10 == 1:
+            print(f'Update took: {self.frame_time * 1000:.2f}ms')
+            print(f'FPS: {self.clock.get_fps():.2f}')
 
     def wait_for_next_tick(self):
         self.clock.tick(FPS)
@@ -625,14 +636,10 @@ if __name__ == '__main__':
         # main loop
         while True:
             perf_mgr.curr_cpu_profile = None
-            _t0 = time.perf_counter()
             game.init_frame()
             handle_events()
             tick_with_prof(perf_mgr.curr_cpu_profile)
-            _t1 = time.perf_counter()
-            if game.curr_tick % 10 == 1:
-                print(f'Update took: {(_t1 - _t0) * 1000:.2f}ms')
-                print(f'FPS: {game.clock.get_fps():.2f}')
+            game.after_frame()
             game.wait_for_next_tick()
     except PGExit:
         pygame.quit()
