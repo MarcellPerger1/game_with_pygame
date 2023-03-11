@@ -219,7 +219,7 @@ class Game:
         perf_mgr.curr_cpu_profile = None
         self.init_frame()
         handle_events()
-        tick_with_prof(perf_mgr.curr_cpu_profile)
+        self.frame_inner_with_prof(perf_mgr.curr_cpu_profile)
         self.after_frame()
 
     def init_frame(self):
@@ -238,9 +238,16 @@ class Game:
         self.clock.tick(FPS)
         self.curr_tick += 1
 
+    def frame_inner_with_prof(self, p: cProfile.Profile | None):
+        if not p:
+            return self.do_frame_inner()
+        with p:
+            self.do_frame_inner()
+        p.dump_stats('game_perf.prof')
+
     def do_frame_inner(self):
-        game.do_tick()
-        game.draw_objects()
+        self.do_tick()
+        self.draw_objects()
 
     def draw_objects(self):
         if USE_FLIP:
@@ -629,13 +636,6 @@ if __name__ == '__main__':
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
                 if DEBUG_CPU:
                     perf_mgr.curr_cpu_profile = cProfile.Profile()
-
-    def tick_with_prof(p: cProfile.Profile | None):
-        if not p:
-            return game.do_frame_inner()
-        with p:
-            game.do_frame_inner()
-        p.dump_stats('game_perf.prof')
 
 
     try:
