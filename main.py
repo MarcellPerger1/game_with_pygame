@@ -251,10 +251,29 @@ class Game:
         self.enemy_spawner = EnemySpawnMgr()
         self.perf_mgr = PerfMgr()
 
-    def mainloop(self):
+    def mainloop_inner(self):
         while True:
             self.do_one_frame()
             self.wait_for_next_frame()
+
+    def mainloop(self):
+        try:
+            self.mainloop_inner()
+        except PGExit:
+            pass
+        self.close_window()
+
+    def close_window(self):
+        self.pre_quit()
+        pygame.quit()
+        self.post_quit()
+
+    def pre_quit(self):
+        pass
+
+    def post_quit(self):
+        if self.perf_mgr.mem_snapshot:
+            self.perf_mgr.print_snapshot()
 
     def do_one_frame(self):
         self.perf_mgr.curr_cpu_profile = None
@@ -665,9 +684,4 @@ if __name__ == '__main__':
 
     game = Game()
     game.init()
-    try:
-        game.mainloop()
-    except PGExit:
-        pygame.quit()
-    if game.perf_mgr.mem_snapshot:
-        game.perf_mgr.print_snapshot()
+    game.mainloop()
