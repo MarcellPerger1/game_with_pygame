@@ -257,10 +257,10 @@ class Game:
             self.wait_for_next_frame()
 
     def do_one_frame(self):
-        game.perf_mgr.curr_cpu_profile = None
+        self.perf_mgr.curr_cpu_profile = None
         self.init_frame()
         self.handle_events()
-        self.frame_inner_with_prof(game.perf_mgr.curr_cpu_profile)
+        self.frame_inner_with_prof(self.perf_mgr.curr_cpu_profile)
         self.after_frame()
 
     def init_frame(self):
@@ -302,7 +302,7 @@ class Game:
             pg.display.update(dirty)
 
     def do_tick(self):
-        if game.player.is_dead:
+        if self.player.is_dead:
             return
         self.root_group.update()
         if not SHOW_BULLETS:
@@ -314,11 +314,11 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 if DEBUG_MEMORY:
-                    game.perf_mgr.take_snapshot()
+                    self.perf_mgr.take_snapshot()
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
                 if DEBUG_CPU:
-                    game.perf_mgr.curr_cpu_profile = cProfile.Profile()
+                    self.perf_mgr.curr_cpu_profile = cProfile.Profile()
 
     @property
     def ticks(self):
