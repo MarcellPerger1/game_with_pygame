@@ -4,7 +4,7 @@ import cProfile
 import random
 import time
 import tracemalloc
-from typing import Any, NoReturn, Literal
+from typing import Any, NoReturn, Literal, overload
 
 import pygame
 
@@ -287,7 +287,7 @@ class Game:
         self.player = Player(Vec2(700, 400))
         TurretItem(Vec2(400, 600))
         self.initial_enemy = Enemy(Vec2(50, 655), immobile=True)
-        self.turrets_text = InvText(self, "Turrets: 0")
+        self.turrets_text = TurretsText(self)
         self.fps_text = FpsText(self, "FPS: N/A")
 
     def _init_components(self):
@@ -457,7 +457,7 @@ if __name__ == '__main__':
                         HasRect(Turret.get_virtual_rect(mouse_pos)), game.turrets, False):
                     Turret(mouse_pos)
                     self.turrets -= 1
-                    update_turrets_text()
+                    game.turrets_text.update()
 
         def on_kill_enemy(self, _enemy: Enemy, _bullet: Bullet):
             self.enemies_killed += 1
@@ -465,7 +465,7 @@ if __name__ == '__main__':
             if self.turret_parts >= 1.0:
                 extra_turrets, self.turret_parts = divmod(self.turret_parts, 1)
                 self.turrets += round(extra_turrets)  # not int() coz fp precision
-                update_turrets_text()
+                game.turrets_text.update()
 
 
     class Collectable(CommonSprite):
@@ -489,7 +489,7 @@ if __name__ == '__main__':
 
         def on_collect(self):
             game.player.turrets += 1
-            update_turrets_text()
+            game.turrets_text.update()
 
 
     class Turret(CommonSprite):
@@ -673,16 +673,18 @@ if __name__ == '__main__':
                 self.fonts.huge, self.text, color='black', justify='center')
             self.rect = self.surf.get_rect(center=self.pos)
 
-    class InvText(GamePgSprite):
+    class TurretsText(GamePgSprite):
         text: str
         surf: pg.surface.Surface
         image: pg.surface.Surface
         rect: pg.Rect
 
-        def __init__(self, game: Game, text: str):
+        def __init__(self, game: Game, text: str = None):
             self.set_game(game)
             super().__init__(None, self.draw_group)
             self.topleft = Vec2(5, 5)
+            if text is None:
+                text = 'Turrets: 0'
             self.set_text(text)
 
         def set_text(self, text: str):
@@ -690,6 +692,12 @@ if __name__ == '__main__':
             self.surf = self.image = self.fonts.monospace.render(
                 self.text, True, pg.color.Color('black'))
             self.rect = self.surf.get_rect(topleft=self.topleft)
+
+        @overload
+        def update(self): ...
+
+        def update(self, *args: Any, **kwargs: Any) -> None:
+            self.set_text(f'Turrets: {self.game.player.turrets}')
 
     class FpsText(GamePgSprite):
         text: str
@@ -721,10 +729,6 @@ if __name__ == '__main__':
         def place_turret(self):
             self.game.enemy_spawner.is_enabled = True
             self.game.initial_enemy.immobile = False
-
-
-    def update_turrets_text():
-        game.turrets_text.set_text(f'Turrets: {game.player.turrets}')
 
 
     def draw_turret_overlays():
