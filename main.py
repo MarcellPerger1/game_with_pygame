@@ -42,6 +42,16 @@ class PGExit(BaseException):
     pass
 
 
+# noinspection PyShadowingNames
+class UsesGame:
+    game: Game
+
+    def __init__(self, game: Game | UsesGame):
+        if isinstance(game, UsesGame):
+            game = game.game
+        self.game = game
+
+
 class CommonSprite(pg.sprite.Sprite):
     """This is a base class for most sprites
     and needs to be subclassed to have any real use"""
