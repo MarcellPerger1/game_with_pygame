@@ -338,11 +338,11 @@ class Game:
     def draw_objects(self):
         if USE_FLIP:
             self.root_group.draw(self.screen)
-            draw_turret_overlays()
+            TurretRangeIndicator.draw_all()
             pg.display.flip()
         else:
             dirty = self.root_group.draw(self.screen)
-            draw_turret_overlays()
+            TurretRangeIndicator.draw_all()
             dirty += self.dirty_this_frame
             pg.display.update(dirty)
 
@@ -545,6 +545,11 @@ if __name__ == '__main__':
 
         @classmethod
         def draw_all(cls):
+            cls.update_overlays_surf()
+            cls.blit_all()
+
+        @classmethod
+        def update_overlays_surf(cls):
             if not cls.need_redraw or not SHOW_TURRET_RANGE:
                 return
             cls.make_overlay_surf()
@@ -708,11 +713,6 @@ if __name__ == '__main__':
         def place_turret(self):
             self.game.enemy_spawner.is_enabled = True
             self.game.initial_enemy.immobile = False
-
-
-    def draw_turret_overlays():
-        TurretRangeIndicator.draw_all()
-        return TurretRangeIndicator.blit_all()
 
 
     game = Game()
