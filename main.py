@@ -11,7 +11,7 @@ from util import option
 from pg_util import rect_from_size, render_text, nearest_of_group
 from containers import HasRect
 from trigger_once import trigger_once
-from perf_mgr import PerfMgr, DEBUG_CPU, DEBUG_MEMORY
+from perf_mgr import PerfMgr
 
 
 pg = pygame
@@ -366,12 +366,10 @@ class Game:
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                if DEBUG_MEMORY:
-                    self.perf_mgr.take_snapshot()
+                self.perf_mgr.take_snapshot()
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
-                if DEBUG_CPU:
-                    self.perf_mgr.curr_cpu_profile = cProfile.Profile()
+                self.perf_mgr.take_cpu_profile()
 
     @property
     def ticks(self):

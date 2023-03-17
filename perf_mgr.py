@@ -25,3 +25,7 @@ class PerfMgr:
 
     def print_snapshot(self, *args, **kwargs):
         self.mem_prof.display_top(self.mem_snapshot, *args, **kwargs)
+
+    def take_cpu_profile(self):
+        if self.do_cpu:
+            self.curr_cpu_profile = cProfile.Profile()
