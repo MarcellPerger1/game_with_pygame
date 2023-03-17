@@ -68,6 +68,10 @@ class UsesGame:
         return self.game.root_group
     # todo update_group
 
+    @property
+    def fonts(self):
+        return self.game.fonts
+
 
 # noinspection PyShadowingNames
 class GamePgSprite(pg.sprite.Sprite, UsesGame):
@@ -656,7 +660,7 @@ if __name__ == '__main__':
             self.text = text
             self.pos = self.game.screen.get_rect().center
             self.surf = self.image = render_text(
-                self.game.fonts.huge, self.text, color='black', justify='center')
+                self.fonts.huge, self.text, color='black', justify='center')
             self.rect = self.surf.get_rect(center=self.pos)
 
     class InvText(GamePgSprite):
@@ -673,7 +677,7 @@ if __name__ == '__main__':
 
         def set_text(self, text: str):
             self.text = text
-            self.surf = self.image = self.game.fonts.monospace.render(
+            self.surf = self.image = self.fonts.monospace.render(
                 self.text, True, pg.color.Color('black'))
             self.rect = self.surf.get_rect(topleft=self.topleft)
 
@@ -691,7 +695,7 @@ if __name__ == '__main__':
 
         def set_text(self, text: str):
             self.text = text
-            self.surf = self.image = self.game.fonts.monospace.render(
+            self.surf = self.image = self.fonts.monospace.render(
                 self.text, True, pg.color.Color('black'))
             self.rect = self.surf.get_rect(topright=self.topright)
 
