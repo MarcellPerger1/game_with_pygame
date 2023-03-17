@@ -363,14 +363,15 @@ if __name__ == '__main__':
     print('Hello world')
 
 
-    class EveryNTicks:
-        def __init__(self, n: int, offset=1):
+    class EveryNTicks(UsesGame):
+        def __init__(self, game_: Game, n: int, offset=1):
+            super().__init__(game_)
             self.n = n
-            self.started_at = game.curr_tick + offset
+            self.started_at = self.game.curr_tick + offset
 
         def is_this_frame(self):
-            return (game.curr_tick >= self.started_at
-                    and (game.curr_tick - self.started_at) % self.n == 0)
+            return (self.game.curr_tick >= self.started_at
+                    and (self.game.curr_tick - self.started_at) % self.n == 0)
 
 
     class Player(CommonSprite):
