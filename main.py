@@ -294,6 +294,7 @@ class Game:
         print('[INFO] Initializing components')
         self.enemy_spawner = EnemySpawnMgr(self)
         self.perf_mgr = PerfMgr()
+        self.tutorial = Tutorial(self)
 
     def mainloop_inner(self):
         while True:
@@ -501,7 +502,7 @@ if __name__ == '__main__':
             self.shot_on_tick = None
             if SHOW_TURRET_RANGE:
                 TurretRangeIndicator(self.pos)
-            Tutorial.place_turret()
+            game.tutorial.place_turret()
 
         def draw_sprite(self):
             pg.draw.rect(self.surf, 'darkgreen', self.surf.get_rect())
@@ -712,12 +713,14 @@ if __name__ == '__main__':
             if self.curr_tick % 5 == 1:
                 self.set_text(f'FPS: {self.game.clock.get_fps():.2f}')
 
-    class Tutorial:
-        @classmethod
+    class Tutorial(UsesGame):
+        def __init__(self, game: Game | UsesGame):
+            super().__init__(game)
+
         @trigger_once
-        def place_turret(cls):
-            game.enemy_spawner.is_enabled = True
-            game.initial_enemy.immobile = False
+        def place_turret(self):
+            self.game.enemy_spawner.is_enabled = True
+            self.game.initial_enemy.immobile = False
 
 
     def update_turrets_text():
@@ -727,9 +730,6 @@ if __name__ == '__main__':
     def draw_turret_overlays():
         TurretRangeIndicator.draw_all()
         return TurretRangeIndicator.blit_all()
-
-
-
 
 
     game = Game()
