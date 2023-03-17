@@ -354,7 +354,10 @@ class Game:
         if not SHOW_BULLETS:
             # not in root_group so need to send update in own group
             self.bullets.update()
-        on_post_tick()
+        self.on_post_tick()
+
+    def on_post_tick(self):
+        self.enemy_spawner.handle_enemy_spawns()
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -686,10 +689,6 @@ if __name__ == '__main__':
         def update(self, *args: Any, **kwargs: Any) -> None:
             if self.game.curr_tick % 5 == 1:
                 self.set_text(f'FPS: {self.game.clock.get_fps():.2f}')
-
-
-    def on_post_tick():
-        game.enemy_spawner.handle_enemy_spawns()
 
     class Tutorial:
         @classmethod
