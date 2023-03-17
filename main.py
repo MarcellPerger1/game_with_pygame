@@ -59,6 +59,15 @@ class UsesGame:
     def set_game(self, game: Game):
         self.game = game
 
+    @property
+    def curr_tick(self):
+        return self.game.curr_tick
+
+    @property
+    def draw_group(self):
+        return self.game.root_group
+    # todo update_group
+
 
 # noinspection PyShadowingNames
 class GamePgSprite(pg.sprite.Sprite, UsesGame):
@@ -152,12 +161,12 @@ class EnemySpawnMgr(UsesGame):
         if not self.is_enabled:
             return
         if self.next_enemy_time is None:
-            self.next_enemy_time = self.game.curr_tick + SPAWN_ENEMY_DELAY_START
+            self.next_enemy_time = self.curr_tick + SPAWN_ENEMY_DELAY_START
         self.spawn_enemies()
 
     def spawn_enemies(self):
         enemies_this_tick = 0
-        while (self.next_enemy_time <= self.game.curr_tick
+        while (self.next_enemy_time <= self.curr_tick
                and enemies_this_tick < MAX_ENEMIES_PER_TICK):
             self.spawn_enemy()
             self.next_enemy_time += self.enemy_spawn_interval
@@ -166,8 +175,8 @@ class EnemySpawnMgr(UsesGame):
         # (won't spawn it this frame but still allows spawning a lot next frame)
         # should really be `ticks + epsilon` as next enemy should spawn at the very start
         # of the next frame but we aren't spawning extra enemies this frame anyway.
-        if self.next_enemy_time < self.game.curr_tick:
-            self.next_enemy_time = self.game.curr_tick
+        if self.next_enemy_time < self.curr_tick:
+            self.next_enemy_time = self.curr_tick
 
     def get_interval_decrease(self):
         curr_val = self.enemy_spawn_interval
@@ -386,11 +395,11 @@ if __name__ == '__main__':
         def __init__(self, game_: Game, n: int, offset=1):
             super().__init__(game_)
             self.n = n
-            self.started_at = self.game.curr_tick + offset
+            self.started_at = self.curr_tick + offset
 
         def is_this_frame(self):
-            return (self.game.curr_tick >= self.started_at
-                    and (self.game.curr_tick - self.started_at) % self.n == 0)
+            return (self.curr_tick >= self.started_at
+                    and (self.curr_tick - self.started_at) % self.n == 0)
 
 
     class Player(CommonSprite):
@@ -643,7 +652,7 @@ if __name__ == '__main__':
     class GameOver(GamePgSprite):
         def __init__(self, game: Game, text: str):
             self.set_game(game)
-            super().__init__(None, self.game.root_group)
+            super().__init__(None, self.draw_group)
             self.text = text
             self.pos = self.game.screen.get_rect().center
             self.surf = self.image = render_text(
@@ -658,7 +667,7 @@ if __name__ == '__main__':
 
         def __init__(self, game: Game, text: str):
             self.set_game(game)
-            super().__init__(None, self.game.root_group)
+            super().__init__(None, self.draw_group)
             self.topleft = Vec2(5, 5)
             self.set_text(text)
 
@@ -676,7 +685,7 @@ if __name__ == '__main__':
 
         def __init__(self, game: Game | UsesGame, text: str):
             self.set_game(game)
-            super().__init__(None, self.game.root_group)
+            super().__init__(None, self.draw_group)
             self.topright = Vec2(self.game.screen.get_width() - 5, 5)
             self.set_text(text)
 
@@ -687,7 +696,7 @@ if __name__ == '__main__':
             self.rect = self.surf.get_rect(topright=self.topright)
 
         def update(self, *args: Any, **kwargs: Any) -> None:
-            if self.game.curr_tick % 5 == 1:
+            if self.curr_tick % 5 == 1:
                 self.set_text(f'FPS: {self.game.clock.get_fps():.2f}')
 
     class Tutorial:
