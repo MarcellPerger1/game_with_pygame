@@ -3,7 +3,6 @@ from __future__ import annotations
 import cProfile
 import random
 import time
-import tracemalloc
 from typing import Any, NoReturn, Literal, overload
 
 import pygame
@@ -12,15 +11,13 @@ from util import option
 from pg_util import rect_from_size, render_text, nearest_of_group
 from containers import HasRect
 from trigger_once import trigger_once
-from mem_profile import MemProf
+from perf_mgr import PerfMgr, DEBUG_CPU, DEBUG_MEMORY
 
 
 pg = pygame
 Vec2 = pg.math.Vector2
 
 
-DEBUG_MEMORY = False
-DEBUG_CPU = True
 USE_FLIP = True
 SHOW_BULLETS = False  # todo test the effect of this on performance
 SHOW_TURRET_RANGE = True
@@ -140,22 +137,6 @@ class CommonSprite(pg.sprite.Sprite):
             raise cls._err_missing_size("get_virtual_rect")
         r = rect_from_size(size, center=pos)
         return r
-
-
-class PerfMgr:
-    mem_snapshot: tracemalloc.Snapshot | None = None
-    curr_cpu_profile: cProfile.Profile | None = None
-
-    def __init__(self, memory=DEBUG_MEMORY, cpu=DEBUG_CPU):
-        self.do_memory = memory
-        self.do_cpu = cpu
-        self.mem_prof = MemProf(self.do_memory)
-
-    def take_snapshot(self):
-        self.mem_snapshot = self.mem_prof.take_snapshot()
-
-    def print_snapshot(self, *args, **kwargs):
-        self.mem_prof.display_top(self.mem_snapshot, *args, **kwargs)
 
 
 class EnemySpawnMgr(UsesGame):
