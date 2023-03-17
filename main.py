@@ -271,7 +271,7 @@ class Game:
         TurretItem(Vec2(400, 600))
         self.initial_enemy = Enemy(Vec2(50, 655), immobile=True)
         self.turrets_text = InvText(self, "Turrets: 0")
-        self.fps_text = FpsText("FPS: N/A")
+        self.fps_text = FpsText(self, "FPS: N/A")
 
     def _init_components(self):
         print('[INFO] Initializing components')
