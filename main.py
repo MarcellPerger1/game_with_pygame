@@ -52,6 +52,13 @@ class UsesGame:
         self.game = game
 
 
+class GamePgSprite(pg.sprite.Sprite, UsesGame):
+    """Class inheriting from both `pygame.sprite.Sprite` and `UsesGame`"""
+    def __init__(self, game_: Game | UsesGame, *groups: pg.sprite.AbstractGroup):
+        UsesGame.__init__(self, game_)
+        pg.sprite.Sprite.__init__(self, *groups)
+
+
 class CommonSprite(pg.sprite.Sprite):
     """This is a base class for most sprites
     and needs to be subclassed to have any real use"""
@@ -621,10 +628,9 @@ if __name__ == '__main__':
             self.immobile = immobile
 
 
-    class GameOver(pygame.sprite.Sprite, UsesGame):
+    class GameOver(GamePgSprite):
         def __init__(self, game_: Game, text: str):
-            UsesGame.__init__(self, game_)
-            pg.sprite.Sprite.__init__(self, self.game.root_group)
+            super().__init__(game_, self.game.root_group)
             self.text = text
             self.pos = self.game.screen.get_rect().center
             self.surf = self.image = render_text(
