@@ -72,6 +72,10 @@ class UsesGame:
     def fonts(self):
         return self.game.fonts
 
+    @property
+    def screen(self):
+        return self.game.screen
+
 
 # noinspection PyShadowingNames
 class GamePgSprite(pg.sprite.Sprite, UsesGame):
@@ -658,7 +662,7 @@ if __name__ == '__main__':
             self.set_game(game)
             super().__init__(None, self.draw_group)
             self.text = text
-            self.pos = self.game.screen.get_rect().center
+            self.pos = self.screen.get_rect().center
             self.surf = self.image = render_text(
                 self.fonts.huge, self.text, color='black', justify='center')
             self.rect = self.surf.get_rect(center=self.pos)
@@ -690,7 +694,7 @@ if __name__ == '__main__':
         def __init__(self, game: Game | UsesGame, text: str):
             self.set_game(game)
             super().__init__(None, self.draw_group)
-            self.topright = Vec2(self.game.screen.get_width() - 5, 5)
+            self.topright = Vec2(self.screen.get_width() - 5, 5)
             self.set_text(text)
 
         def set_text(self, text: str):
