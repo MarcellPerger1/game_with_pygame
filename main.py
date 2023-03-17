@@ -125,8 +125,9 @@ class PerfMgr:
         self.mem_prof.display_top(self.mem_snapshot, *args, **kwargs)
 
 
-class EnemySpawnMgr:
-    def __init__(self):
+class EnemySpawnMgr(UsesGame):
+    def __init__(self, game_: Game):
+        super().__init__(game_)
         self.is_enabled = False
         self.next_enemy_time: int | None = None
         self.enemy_spawn_interval: float = SPAWN_INTERVAL_START
@@ -135,12 +136,12 @@ class EnemySpawnMgr:
         if not self.is_enabled:
             return
         if self.next_enemy_time is None:
-            self.next_enemy_time = game.curr_tick + SPAWN_ENEMY_DELAY_START
+            self.next_enemy_time = self.game.curr_tick + SPAWN_ENEMY_DELAY_START
         self.spawn_enemies()
 
     def spawn_enemies(self):
         enemies_this_tick = 0
-        while (self.next_enemy_time <= game.curr_tick
+        while (self.next_enemy_time <= self.game.curr_tick
                and enemies_this_tick < MAX_ENEMIES_PER_TICK):
             self.spawn_enemy()
             self.next_enemy_time += self.enemy_spawn_interval
@@ -149,8 +150,8 @@ class EnemySpawnMgr:
         # (won't spawn it this frame but still allows spawning a lot next frame)
         # should really be `ticks + epsilon` as next enemy should spawn at the very start
         # of the next frame but we aren't spawning extra enemies this frame anyway.
-        if self.next_enemy_time < game.curr_tick:
-            self.next_enemy_time = game.curr_tick
+        if self.next_enemy_time < self.game.curr_tick:
+            self.next_enemy_time = self.game.curr_tick
 
     def get_interval_decrease(self):
         curr_val = self.enemy_spawn_interval
@@ -175,7 +176,7 @@ class EnemySpawnMgr:
         distance = random.uniform(250, 500)
         at = Vec2()
         at.from_polar((distance, angle))
-        at += Vec2(game.player.pos)
+        at += Vec2(self.game.player.pos)
         Enemy(at)
 
 
@@ -258,7 +259,7 @@ class Game:
 
     def _init_components(self):
         print('[INFO] Initializing components')
-        self.enemy_spawner = EnemySpawnMgr()
+        self.enemy_spawner = EnemySpawnMgr(self)
         self.perf_mgr = PerfMgr()
 
     def mainloop_inner(self):
