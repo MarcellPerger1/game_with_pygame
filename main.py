@@ -588,7 +588,7 @@ if __name__ == '__main__':
         # noinspection PyMethodMayBeStatic
         def on_collide_player(self):
             game.player.is_dead = True
-            GameOver(f'Game Over\nScore: {game.player.enemies_killed}')
+            GameOver(game, f'Game Over\nScore: {game.player.enemies_killed}')
             print('You died')
 
         def update(self, *args: Any, **kwargs: Any) -> None:
@@ -621,13 +621,14 @@ if __name__ == '__main__':
             self.immobile = immobile
 
 
-    class GameOver(pygame.sprite.Sprite):
-        def __init__(self, text: str):
-            super().__init__(game.root_group)
+    class GameOver(pygame.sprite.Sprite, UsesGame):
+        def __init__(self, game_: Game, text: str):
+            UsesGame.__init__(self, game_)
+            pg.sprite.Sprite.__init__(self, self.game.root_group)
             self.text = text
-            self.pos = game.screen.get_rect().center
+            self.pos = self.game.screen.get_rect().center
             self.surf = self.image = render_text(
-                game.fonts.huge, self.text, color='black', justify='center')
+                self.game.fonts.huge, self.text, color='black', justify='center')
             self.rect = self.surf.get_rect(center=self.pos)
 
     class InvText(pygame.sprite.Sprite):
