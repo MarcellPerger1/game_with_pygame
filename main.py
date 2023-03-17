@@ -661,30 +661,31 @@ if __name__ == '__main__':
 
         def set_text(self, text: str):
             self.text = text
-            self.surf = self.image = game.fonts.monospace.render(
+            self.surf = self.image = self.game.fonts.monospace.render(
                 self.text, True, pg.color.Color('black'))
             self.rect = self.surf.get_rect(topleft=self.topleft)
 
-    class FpsText(pg.sprite.Sprite):
+    class FpsText(GamePgSprite):
         text: str
         surf: pg.surface.Surface
         image: pg.surface.Surface
         rect: pg.Rect
 
-        def __init__(self, text: str):
-            super().__init__(game.root_group)
-            self.topright = Vec2(game.screen.get_width() - 5, 5)
+        def __init__(self, game: Game | UsesGame, text: str):
+            self.set_game(game)
+            super().__init__(None, self.game.root_group)
+            self.topright = Vec2(self.game.screen.get_width() - 5, 5)
             self.set_text(text)
 
         def set_text(self, text: str):
             self.text = text
-            self.surf = self.image = game.fonts.monospace.render(
+            self.surf = self.image = self.game.fonts.monospace.render(
                 self.text, True, pg.color.Color('black'))
             self.rect = self.surf.get_rect(topright=self.topright)
 
         def update(self, *args: Any, **kwargs: Any) -> None:
-            if game.curr_tick % 5 == 1:
-                self.set_text(f'FPS: {game.clock.get_fps():.2f}')
+            if self.game.curr_tick % 5 == 1:
+                self.set_text(f'FPS: {self.game.clock.get_fps():.2f}')
 
 
     def on_post_tick():
