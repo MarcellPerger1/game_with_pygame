@@ -56,6 +56,9 @@ class UsesGame:
                 "game needs to be specified when using strict=True "
                 "(either as an attribute before calling __init__ or passed as an argument)")
 
+    def set_game(self, game: Game):
+        self.game = game
+
 
 # noinspection PyShadowingNames
 class GamePgSprite(pg.sprite.Sprite, UsesGame):
@@ -63,9 +66,6 @@ class GamePgSprite(pg.sprite.Sprite, UsesGame):
     def __init__(self, game: Game | UsesGame, *groups: pg.sprite.AbstractGroup):
         UsesGame.__init__(self, game)
         pg.sprite.Sprite.__init__(self, *groups)
-
-    def set_game(self, game: Game):
-        self.game = game
 
 
 class CommonSprite(pg.sprite.Sprite):
