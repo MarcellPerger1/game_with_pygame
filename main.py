@@ -376,6 +376,11 @@ class Game:
     def on_post_tick(self):
         self.enemy_spawner.handle_enemy_spawns()
 
+    # todo observer pattern for on_* methods
+    def on_kill_enemy(self, enemy, bullet):
+        self.enemy_spawner.increment_interval_once()
+        self.player.on_kill_enemy(enemy, bullet)
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -619,7 +624,7 @@ if __name__ == '__main__':
 
         def on_hit_by_bullet(self, bullet: Bullet):
             self.kill()
-            on_kill_enemy(self, bullet)
+            game.on_kill_enemy(self, bullet)
 
         # noinspection PyMethodMayBeStatic
         def on_collide_player(self):
@@ -724,9 +729,7 @@ if __name__ == '__main__':
         return TurretRangeIndicator.blit_all()
 
 
-    def on_kill_enemy(enemy, bullet):
-        game.enemy_spawner.increment_interval_once()
-        game.player.on_kill_enemy(enemy, bullet)
+
 
 
     game = Game()
