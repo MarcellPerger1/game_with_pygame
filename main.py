@@ -63,7 +63,7 @@ class UsesGame:
 # noinspection PyShadowingNames
 class GamePgSprite(pg.sprite.Sprite, UsesGame):
     """Class inheriting from both `pygame.sprite.Sprite` and `UsesGame`"""
-    def __init__(self, game: Game | UsesGame, *groups: pg.sprite.AbstractGroup):
+    def __init__(self, game: Game | UsesGame | None, *groups: pg.sprite.AbstractGroup):
         UsesGame.__init__(self, game)
         pg.sprite.Sprite.__init__(self, *groups)
 
@@ -639,7 +639,8 @@ if __name__ == '__main__':
 
     class GameOver(GamePgSprite):
         def __init__(self, game: Game, text: str):
-            super().__init__(game, game.root_group)
+            self.set_game(game)
+            super().__init__(None, self.game.root_group)
             self.text = text
             self.pos = self.game.screen.get_rect().center
             self.surf = self.image = render_text(
@@ -653,7 +654,8 @@ if __name__ == '__main__':
         rect: pg.Rect
 
         def __init__(self, game: Game, text: str):
-            super().__init__(game, game.root_group)
+            self.set_game(game)
+            super().__init__(None, self.game.root_group)
             self.topleft = Vec2(5, 5)
             self.set_text(text)
 
