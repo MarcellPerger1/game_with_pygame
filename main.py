@@ -44,19 +44,28 @@ class PGExit(BaseException):
 
 # noinspection PyShadowingNames
 class UsesGame:
-    game: Game
+    game: Game = None
 
-    def __init__(self, game: Game | UsesGame):
+    # should this have a default of None (or should None need to be passed explicitly)
+    def __init__(self, game: Game | UsesGame | None, strict=True):
         if isinstance(game, UsesGame):
             game = game.game
-        self.game = game
+        self.game = game or self.game
+        if strict and self.game is None:
+            raise RuntimeError(
+                "game needs to be specified when using strict=True "
+                "(either as an attribute before calling __init__ or passed as an argument)")
 
 
+# noinspection PyShadowingNames
 class GamePgSprite(pg.sprite.Sprite, UsesGame):
     """Class inheriting from both `pygame.sprite.Sprite` and `UsesGame`"""
-    def __init__(self, game_: Game | UsesGame, *groups: pg.sprite.AbstractGroup):
-        UsesGame.__init__(self, game_)
+    def __init__(self, game: Game | UsesGame, *groups: pg.sprite.AbstractGroup):
+        UsesGame.__init__(self, game)
         pg.sprite.Sprite.__init__(self, *groups)
+
+    def set_game(self, game: Game):
+        self.game = game
 
 
 class CommonSprite(pg.sprite.Sprite):
@@ -261,7 +270,7 @@ class Game:
         self.player = Player(Vec2(700, 400))
         TurretItem(Vec2(400, 600))
         self.initial_enemy = Enemy(Vec2(50, 655), immobile=True)
-        self.turrets_text = InvText("Turrets: 0")
+        self.turrets_text = InvText(self, "Turrets: 0")
         self.fps_text = FpsText("FPS: N/A")
 
     def _init_components(self):
@@ -629,22 +638,22 @@ if __name__ == '__main__':
 
 
     class GameOver(GamePgSprite):
-        def __init__(self, game_: Game, text: str):
-            super().__init__(game_, self.game.root_group)
+        def __init__(self, game: Game, text: str):
+            super().__init__(game, game.root_group)
             self.text = text
             self.pos = self.game.screen.get_rect().center
             self.surf = self.image = render_text(
                 self.game.fonts.huge, self.text, color='black', justify='center')
             self.rect = self.surf.get_rect(center=self.pos)
 
-    class InvText(pygame.sprite.Sprite):
+    class InvText(GamePgSprite):
         text: str
         surf: pg.surface.Surface
         image: pg.surface.Surface
         rect: pg.Rect
 
-        def __init__(self, text: str):
-            super().__init__(game.root_group)
+        def __init__(self, game: Game, text: str):
+            super().__init__(game, game.root_group)
             self.topleft = Vec2(5, 5)
             self.set_text(text)
 
