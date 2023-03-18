@@ -63,7 +63,7 @@ class UsesGame:
 
     @property
     def draw_group(self):
-        return self.game.root_group
+        return self.game.display_group
     # todo update_group
 
     @property
@@ -90,24 +90,24 @@ class CommonSprite(GamePgSprite):
     in_root = True
 
     def __init__(self, game: HasGame | None, pos: Vec2, *groups: pg.sprite.AbstractGroup,
-                 size=None, in_root: bool = None, surf: pg.surface.Surface = None):
+                 size=None, in_display: bool = None, surf: pg.surface.Surface = None):
         """Create this sprite
 
         Initialise this sprite with image and rect attributes
 
         :param game: The `Game` object
         :param pos: Center of sprite
-        :param groups: The groups to add this to (root_group is automatically
+        :param groups: The groups to add this to (display_group is automatically
             included unless specified otherwise, see not_in_root)
         :param size:  The size of this sprite; can also be on the class
-        :param in_root: If False, doesn't add it to root_group
+        :param in_display: If False, doesn't add it to display_group
         :param surf: The surface to use, overrides `make_surface`
         """
         self.set_game(game, method_name='__init__')
-        self.in_root = option(in_root, self.in_root)
+        self.in_root = option(in_display, self.in_root)
         self.pos = pos
         self.size = option(size, self.size)
-        groups = (self.game.root_group, *groups) if self.in_root else groups
+        groups = (self.game.display_group, *groups) if self.in_root else groups
         super().__init__(None, *groups)
         if self.size is None:
             raise self._err_missing_size("__init__")
@@ -250,7 +250,7 @@ class Game:
     def _init_groups(self):
         print('[INFO] Initializing groups')
         # todo should use LayeredUpdates / LayeredDirty
-        self.root_group = pg.sprite.RenderUpdates()
+        self.display_group = pg.sprite.RenderUpdates()
         self.enemies = pg.sprite.Group()
         self.turret_range_overlays = pg.sprite.Group()
         self.bullets = pg.sprite.Group()
@@ -341,11 +341,11 @@ class Game:
 
     def draw_objects(self):
         if USE_FLIP:
-            self.root_group.draw(self.screen)
+            self.display_group.draw(self.screen)
             TurretRangeIndicator.draw_all(self)
             pg.display.flip()
         else:
-            dirty = self.root_group.draw(self.screen)
+            dirty = self.display_group.draw(self.screen)
             TurretRangeIndicator.draw_all(self)
             dirty += self.dirty_this_frame
             pg.display.update(dirty)
@@ -353,9 +353,9 @@ class Game:
     def do_tick(self):
         if self.player.is_dead:
             return
-        self.root_group.update()
+        self.display_group.update()
         if not SHOW_BULLETS:
-            # not in root_group so need to send update in own group
+            # not in display_group so need to send update in own group
             self.bullets.update()
         self.on_post_tick()
 
@@ -517,8 +517,8 @@ class TurretRangeIndicator(CommonSprite):
 
     def __init__(self, game: HasGame, pos: Vec2, *groups: pg.sprite.AbstractGroup):
         self.set_game(game)
-        super().__init__(None, pos, self.game.turret_range_overlays,
-                         *groups, in_root=False)
+        super().__init__(None, pos, self.game.turret_range_overlays, *groups,
+                         in_display=False)
         self.on_create()
 
     def make_surface(self):
@@ -583,7 +583,7 @@ class Bullet(CommonSprite):
     def __init__(self, game: HasGame, pos: Vec2, target: Vec2,
                  *groups: pg.sprite.AbstractGroup):
         self.set_game(game)
-        super().__init__(None, pos, self.game.bullets, *groups, in_root=SHOW_BULLETS)
+        super().__init__(None, pos, self.game.bullets, *groups, in_display=SHOW_BULLETS)
         self.target = target
 
     def draw_sprite(self):
