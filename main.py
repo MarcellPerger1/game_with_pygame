@@ -61,9 +61,16 @@ class UsesGame:
         return self.game.curr_tick
 
     @property
-    def draw_group(self):
+    def display_group(self):
         return self.game.display_group
-    # todo update_group
+
+    @property
+    def root_group(self):
+        return self.game.root_group
+
+    @property
+    def player(self):
+        return self.game.player
 
     @property
     def fonts(self):
@@ -126,9 +133,9 @@ class CommonSprite(GamePgSprite):
     def get_extra_groups(self):
         extra = []
         if self.in_root:
-            extra.append(self.game.root_group)
+            extra.append(self.root_group)
         if self.in_display:
-            extra.append(self.game.display_group)
+            extra.append(self.display_group)
         return tuple(extra)
 
     def draw_sprite(self):
@@ -201,14 +208,12 @@ class EnemySpawnMgr(UsesGame):
         if self.enemy_spawn_interval < MIN_SPAWN_INTERVAL:
             self.enemy_spawn_interval = MIN_SPAWN_INTERVAL
 
-    # might use interval to determine health, etc.
-    # noinspection PyMethodMayBeStatic
     def spawn_enemy(self):
         angle = random.uniform(0, 360)
         distance = random.uniform(250, 500)
         at = Vec2()
         at.from_polar((distance, angle))
-        at += Vec2(self.game.player.pos)
+        at += Vec2(self.player.pos)
         Enemy(self, at)
 
 
@@ -368,10 +373,7 @@ class Game:
     def do_tick(self):
         if self.player.is_dead:
             return
-        self.display_group.update()
-        if not SHOW_BULLETS:
-            # not in display_group so need to send update in own group
-            self.bullets.update()
+        self.root_group.update()
         self.on_post_tick()
 
     def on_post_tick(self):
@@ -477,7 +479,7 @@ class Collectable(CommonSprite):
         """This method is called when this has been collected (after being kill-ed)"""
 
     def update(self, *args: Any, **kwargs: Any) -> None:
-        if pg.sprite.collide_rect(self, self.game.player):
+        if pg.sprite.collide_rect(self, self.player):
             self.kill()
             self.on_collect()
 
@@ -487,7 +489,7 @@ class TurretItem(Collectable):
         pg.draw.rect(self.surf, 'darkolivegreen3', self.surf.get_rect())
 
     def on_collect(self):
-        self.game.player.turrets += 1
+        self.player.turrets += 1
         self.game.turrets_text.update()
 
 
@@ -637,13 +639,13 @@ class CommonEnemy(CommonSprite):
         self.game.on_kill_enemy(self, bullet)
 
     def on_collide_player(self):
-        self.game.player.is_dead = True
-        GameOver(self, f'Game Over\nScore: {self.game.player.enemies_killed}')
+        self.player.is_dead = True
+        GameOver(self, f'Game Over\nScore: {self.player.enemies_killed}')
         print('You died')
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         """This update function handles killing player on contact"""
-        if pg.sprite.collide_rect(self, self.game.player):
+        if pg.sprite.collide_rect(self, self.player):
             self.on_collide_player()
 
 
@@ -660,7 +662,7 @@ class Enemy(CommonEnemy):
     def update(self, *args: Any, **kwargs: Any) -> None:
         super().update(*args, **kwargs)
         if not self.immobile:
-            self.pos = self.pos.move_towards(self.game.player.pos, ENEMY_SPEED)
+            self.pos = self.pos.move_towards(self.player.pos, ENEMY_SPEED)
             self.rect.center = self.pos
 
 
@@ -676,7 +678,7 @@ class EnemyWithHealth(CommonEnemy):
 class GameOver(GamePgSprite):
     def __init__(self, game: HasGame, text: str):
         self.set_game(game)
-        super().__init__(None, self.draw_group)
+        super().__init__(None, self.display_group)
         self.text = text
         self.pos = self.screen.get_rect().center
         self.surf = self.image = render_text(
@@ -692,7 +694,7 @@ class TurretsText(GamePgSprite):
 
     def __init__(self, game: HasGame, text: str = None):
         self.set_game(game)
-        super().__init__(None, self.draw_group)
+        super().__init__(None, self.display_group)
         self.topleft = Vec2(5, 5)
         if text is None:
             text = 'Turrets: 0'
@@ -708,7 +710,7 @@ class TurretsText(GamePgSprite):
     def update(self): ...
 
     def update(self, *args: Any, **kwargs: Any) -> None:
-        self.set_text(f'Turrets: {self.game.player.turrets}')
+        self.set_text(f'Turrets: {self.player.turrets}')
 
 
 class FpsText(GamePgSprite):
@@ -719,7 +721,7 @@ class FpsText(GamePgSprite):
 
     def __init__(self, game: HasGame, text: str):
         self.set_game(game)
-        super().__init__(None, self.draw_group)
+        super().__init__(None, self.display_group)
         self.topright = Vec2(self.screen.get_width() - 5, 5)
         self.set_text(text)
 
