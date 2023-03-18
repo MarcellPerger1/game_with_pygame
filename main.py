@@ -637,7 +637,7 @@ class EnemyWithHealth(CommonEnemy):
 class GameOver(GamePgSprite):
     def __init__(self, game: HasGame, text: str):
         self.set_game(game)
-        super().__init__(None, self.display_group)
+        super().__init__(None, self.root_group, self.display_group)
         self.text = text
         self.pos = self.screen.get_rect().center
         self.surf = self.image = render_text(
@@ -653,7 +653,7 @@ class TurretsText(GamePgSprite):
 
     def __init__(self, game: HasGame, text: str = None):
         self.set_game(game)
-        super().__init__(None, self.display_group)
+        super().__init__(None, self.root_group, self.display_group)
         self.topleft = Vec2(5, 5)
         if text is None:
             text = 'Turrets: 0'
@@ -680,7 +680,7 @@ class FpsText(GamePgSprite):
 
     def __init__(self, game: HasGame, text: str):
         self.set_game(game)
-        super().__init__(None, self.display_group)
+        super().__init__(None, self.root_group, self.display_group)
         self.topright = Vec2(self.screen.get_width() - 5, 5)
         self.set_text(text)
 
