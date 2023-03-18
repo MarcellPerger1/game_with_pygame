@@ -45,16 +45,17 @@ class UsesGame:
 
     # should this have a default of None (or should None need to be passed explicitly)
     def __init__(self, game: HasGame | None, strict=True):
-        self.set_game(game, strict)
+        self.set_game(game, strict, '__init__')
 
-    def set_game(self, game: HasGame | None, strict=True):
+    def set_game(self, game: HasGame | None, strict=True, method_name='set_game'):
         if isinstance(game, UsesGame):
             game = game.game
         self.game = game or self.game
         if strict and self.game is None:
             raise RuntimeError(
-                "game needs to be specified when using strict=True "
-                "(either as an attribute before calling __init__ or passed as an argument)")
+                f"game needs to be specified when using strict=True "
+                f"(either as an attribute before calling "
+                f"{method_name} or passed as an argument)")
 
     @property
     def curr_tick(self):
@@ -82,13 +83,13 @@ class GamePgSprite(pg.sprite.Sprite, UsesGame):
         pg.sprite.Sprite.__init__(self, *groups)
 
 
-class CommonSprite(pg.sprite.Sprite):
+class CommonSprite(GamePgSprite):
     """This is a base class for most sprites
     and needs to be subclassed to have any real use"""
     size: Vec2 = None
     in_root = True
 
-    def __init__(self, pos: Vec2, *groups: pg.sprite.AbstractGroup,
+    def __init__(self, game: HasGame | None, pos: Vec2, *groups: pg.sprite.AbstractGroup,
                  size=None, in_root: bool = None, surf: pg.surface.Surface = None):
         """Create this sprite
 
@@ -100,11 +101,12 @@ class CommonSprite(pg.sprite.Sprite):
         :param size:  The size of this sprite; can also be on the class
         :param not_in_root: If True, doesn't add it to root_group
         """
+        self.set_game(game, method_name='__init__')
         self.in_root = option(in_root, self.in_root)
         self.pos = pos
         self.size = option(size, self.size)
-        groups = (game.root_group, *groups) if self.in_root else groups
-        pg.sprite.Sprite.__init__(self, *groups)
+        groups = (self.game.root_group, *groups) if self.in_root else groups
+        super().__init__(None, *groups)
         if self.size is None:
             raise self._err_missing_size("__init__")
         if surf is None:
@@ -402,7 +404,7 @@ if __name__ == '__main__':
         size = Vec2(P_RADIUS * 2, P_RADIUS * 2)
 
         def __init__(self, pos: Vec2):
-            super().__init__(pos)
+            super().__init__(game, pos)
             self.turrets = 0
             self.is_dead = False
             self.enemies_killed = 0
@@ -454,7 +456,7 @@ if __name__ == '__main__':
         size = Vec2(12, 12)  # 'standard' size for a collectable; override this
 
         def __init__(self, pos: Vec2):
-            super().__init__(pos)
+            super().__init__(game, pos)
 
         # noinspection PyMethodMayBeStatic
         def on_collect(self):
@@ -479,7 +481,8 @@ if __name__ == '__main__':
 
         def __init__(self, pos: Vec2, *groups: pg.sprite.AbstractGroup,
                      interval: int = TURRET_INTERVAL):
-            super().__init__(pos, game.turrets, *groups)
+            self.set_game(game)
+            super().__init__(None, pos, self.game.turrets, *groups)
             self.interval = interval
             self.shot_on_tick = None
             if SHOW_TURRET_RANGE:
@@ -512,7 +515,9 @@ if __name__ == '__main__':
         overlays_surf: pg.Surface = None
 
         def __init__(self, pos: Vec2, *groups: pg.sprite.AbstractGroup):
-            super().__init__(pos, game.turret_range_overlays, *groups, in_root=False)
+            self.set_game(game)
+            super().__init__(None, pos, self.game.turret_range_overlays,
+                             *groups, in_root=False)
             self.on_create()
 
         def make_surface(self):
@@ -575,7 +580,8 @@ if __name__ == '__main__':
         size = Vec2(6, 6)
 
         def __init__(self, pos: Vec2, target: Vec2, *groups: pg.sprite.AbstractGroup):
-            super().__init__(pos, game.bullets, *groups, in_root=SHOW_BULLETS)
+            self.set_game(game)
+            super().__init__(None, pos, self.game.bullets, *groups, in_root=SHOW_BULLETS)
             self.target = target
 
         def draw_sprite(self):
@@ -605,8 +611,9 @@ if __name__ == '__main__':
         def __init__(self, pos: Vec2,
                      *groups: pg.sprite.AbstractGroup,
                      is_in_enemies=True, **kwargs):
-            groups = (*groups, game.enemies) if is_in_enemies else groups
-            super(CommonEnemy, self).__init__(pos, *groups, **kwargs)
+            self.set_game(game)
+            groups = (*groups, self.game.enemies) if is_in_enemies else groups
+            super().__init__(None, pos, *groups, **kwargs)
 
         def on_hit_by_bullet(self, bullet: Bullet):
             self.kill()
