@@ -90,10 +90,36 @@ class DrawableSprite(GroupMemberSprite):
             self.rect = rect
 
 
-class CommonSprite(DrawableSprite):
+class SizedSprite(DrawableSprite):
+    size: Vec2 = None
+
+    def __init__(self, game: HasGame | None, *groups: pg.sprite.AbstractGroup,
+                 surf: pg.Surface = None, rect: pg.Rect = None, size: Vec2 = None,
+                 in_root: bool = None, in_display: bool = None):
+        super().__init__(game, *groups, surf=surf, rect=rect,
+                         in_root=in_root, in_display=in_display)
+        self.size = option(size, self.size)
+        if self.size is None:
+            raise self._err_missing_size("__init__")
+
+    @classmethod
+    def _err_missing_size(cls, method_name: str) -> NoReturn:
+        return TypeError(f"size must be passed to {method_name}"
+                         " or set as a class attribute")
+
+    @classmethod
+    def get_virtual_rect(cls, pos: Vec2, size: Vec2 = None):
+        if size is None:
+            size = cls.size
+        if size is None:
+            raise cls._err_missing_size("get_virtual_rect")
+        r = rect_from_size(size, center=pos)
+        return r
+
+
+class CommonSprite(SizedSprite):
     """This is a base class for most sprites
     and needs to be subclassed to have any real use"""
-    size: Vec2 = None
 
     def __init__(self, game: HasGame | None, pos: Vec2, *groups: pg.sprite.AbstractGroup,
                  size=None, in_root: bool = None, in_display: bool = None,
@@ -111,11 +137,8 @@ class CommonSprite(DrawableSprite):
         :param surf: The surface to use, overrides `make_surface`
         """
         self.set_game(game, method_name='__init__')
-        super().__init__(None, *groups, in_root=in_root, in_display=in_display)
+        super().__init__(None, *groups, size=size, in_root=in_root, in_display=in_display)
         self.pos = pos
-        self.size = option(size, self.size)
-        if self.size is None:
-            raise self._err_missing_size("__init__")
         if surf is None:
             surf = self.make_surface()
         self.image = self.surf = surf
