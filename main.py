@@ -588,10 +588,8 @@ if __name__ == '__main__':
             self.kill()
 
         def update(self, *args: Any, **kwargs: Any) -> None:
-            enemies_hit = pg.sprite.spritecollide(self, game.enemies, False)
-            if len(enemies_hit) != 0:
-                # only hit first one
-                enemy: CommonEnemy = enemies_hit[0]
+            enemy: CommonEnemy | None = pg.sprite.spritecollideany(self, game.enemies)
+            if enemy is not None:
                 self.on_hit_enemy(enemy)
                 return
             if self.pos == self.target:
