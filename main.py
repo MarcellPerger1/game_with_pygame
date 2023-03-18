@@ -193,7 +193,7 @@ class EnemySpawnMgr(UsesGame):
         at = Vec2()
         at.from_polar((distance, angle))
         at += Vec2(self.game.player.pos)
-        Enemy(at)
+        Enemy(self, at)
 
 
 class Fonts:
@@ -267,9 +267,9 @@ class Game:
 
     def _init_objects(self):
         print('[INFO] Initializing objects')
-        self.player = Player(Vec2(700, 400))
-        TurretItem(Vec2(400, 600))
-        self.initial_enemy = Enemy(Vec2(50, 655), immobile=True)
+        self.player = Player(self, Vec2(700, 400))
+        TurretItem(self, Vec2(400, 600))
+        self.initial_enemy = Enemy(self, Vec2(50, 655), immobile=True)
         self.turrets_text = TurretsText(self)
         self.fps_text = FpsText(self, "FPS: N/A")
 
@@ -403,7 +403,7 @@ if __name__ == '__main__':
     class Player(CommonSprite):
         size = Vec2(P_RADIUS * 2, P_RADIUS * 2)
 
-        def __init__(self, pos: Vec2):
+        def __init__(self, game: HasGame, pos: Vec2):
             super().__init__(game, pos)
             self.turrets = 0
             self.is_dead = False
@@ -439,7 +439,7 @@ if __name__ == '__main__':
                 mouse_pos = Vec2(pg.mouse.get_pos())
                 if not pg.sprite.spritecollide(
                         HasRect(Turret.get_virtual_rect(mouse_pos)), game.turrets, False):
-                    Turret(mouse_pos)
+                    Turret(self, mouse_pos)
                     self.turrets -= 1
                     game.turrets_text.update()
 
@@ -455,7 +455,7 @@ if __name__ == '__main__':
     class Collectable(CommonSprite):
         size = Vec2(12, 12)  # 'standard' size for a collectable; override this
 
-        def __init__(self, pos: Vec2):
+        def __init__(self, game: HasGame, pos: Vec2):
             super().__init__(game, pos)
 
         # noinspection PyMethodMayBeStatic
@@ -479,14 +479,14 @@ if __name__ == '__main__':
     class Turret(CommonSprite):
         size = Vec2(20, 20)
 
-        def __init__(self, pos: Vec2, *groups: pg.sprite.AbstractGroup,
+        def __init__(self, game: HasGame, pos: Vec2, *groups: pg.sprite.AbstractGroup,
                      interval: int = TURRET_INTERVAL):
             self.set_game(game)
             super().__init__(None, pos, self.game.turrets, *groups)
             self.interval = interval
             self.shot_on_tick = None
             if SHOW_TURRET_RANGE:
-                TurretRangeIndicator(self.pos)
+                TurretRangeIndicator(self, self.pos)
             game.tutorial.place_turret()
 
         def draw_sprite(self):
@@ -500,7 +500,7 @@ if __name__ == '__main__':
             if self.can_shoot():
                 target: Enemy = nearest_of_group(self.pos, game.enemies)
                 if target is not None and self.can_shoot_enemy(target):
-                    Bullet(self.pos, target.pos)
+                    Bullet(self, self.pos, target.pos)
                     self.shot_on_tick = game.curr_tick
 
         def can_shoot_enemy(self, enemy: Enemy):
@@ -514,7 +514,7 @@ if __name__ == '__main__':
         need_redraw: list[TurretRangeIndicator] | Literal['all'] = 'all'
         overlays_surf: pg.Surface = None
 
-        def __init__(self, pos: Vec2, *groups: pg.sprite.AbstractGroup):
+        def __init__(self, game: HasGame, pos: Vec2, *groups: pg.sprite.AbstractGroup):
             self.set_game(game)
             super().__init__(None, pos, self.game.turret_range_overlays,
                              *groups, in_root=False)
@@ -579,7 +579,8 @@ if __name__ == '__main__':
     class Bullet(CommonSprite):
         size = Vec2(6, 6)
 
-        def __init__(self, pos: Vec2, target: Vec2, *groups: pg.sprite.AbstractGroup):
+        def __init__(self, game: HasGame, pos: Vec2, target: Vec2,
+                     *groups: pg.sprite.AbstractGroup):
             self.set_game(game)
             super().__init__(None, pos, self.game.bullets, *groups, in_root=SHOW_BULLETS)
             self.target = target
@@ -608,7 +609,7 @@ if __name__ == '__main__':
 
 
     class CommonEnemy(CommonSprite):
-        def __init__(self, pos: Vec2,
+        def __init__(self, game: HasGame, pos: Vec2,
                      *groups: pg.sprite.AbstractGroup,
                      is_in_enemies=True, **kwargs):
             self.set_game(game)
@@ -633,8 +634,8 @@ if __name__ == '__main__':
     class Enemy(CommonEnemy):
         size = Vec2(30, 30)
 
-        def __init__(self, pos: Vec2, immobile=False):
-            super().__init__(pos)
+        def __init__(self, game: HasGame, pos: Vec2, immobile=False):
+            super().__init__(game, pos)
             self.immobile = immobile
 
         def draw_sprite(self):
@@ -649,8 +650,8 @@ if __name__ == '__main__':
     class EnemyWithHealth(CommonEnemy):
         size = Vec2(30, 30)
 
-        def __init__(self, pos: Vec2, health: float, immobile=False):
-            super().__init__(pos)
+        def __init__(self, game: HasGame, pos: Vec2, health: float, immobile=False):
+            super().__init__(game, pos)
             self.health = health
             self.immobile = immobile
 
