@@ -3,7 +3,7 @@ from __future__ import annotations
 import cProfile
 import random
 import time
-from typing import Any, NoReturn, Literal, overload
+from typing import Any, NoReturn, Literal, overload, Union
 
 import pygame
 
@@ -44,7 +44,10 @@ class UsesGame:
     game: Game = None
 
     # should this have a default of None (or should None need to be passed explicitly)
-    def __init__(self, game: Game | UsesGame | None, strict=True):
+    def __init__(self, game: HasGame | None, strict=True):
+        self.set_game(game, strict)
+
+    def set_game(self, game: HasGame | None, strict=True):
         if isinstance(game, UsesGame):
             game = game.game
         self.game = game or self.game
@@ -52,9 +55,6 @@ class UsesGame:
             raise RuntimeError(
                 "game needs to be specified when using strict=True "
                 "(either as an attribute before calling __init__ or passed as an argument)")
-
-    def set_game(self, game: Game):
-        self.game = game
 
     @property
     def curr_tick(self):
@@ -77,7 +77,7 @@ class UsesGame:
 # noinspection PyShadowingNames
 class GamePgSprite(pg.sprite.Sprite, UsesGame):
     """Class inheriting from both `pygame.sprite.Sprite` and `UsesGame`"""
-    def __init__(self, game: Game | UsesGame | None, *groups: pg.sprite.AbstractGroup):
+    def __init__(self, game: HasGame | None, *groups: pg.sprite.AbstractGroup):
         UsesGame.__init__(self, game)
         pg.sprite.Sprite.__init__(self, *groups)
 
@@ -140,7 +140,7 @@ class CommonSprite(pg.sprite.Sprite):
 
 
 class EnemySpawnMgr(UsesGame):
-    def __init__(self, game_: Game):
+    def __init__(self, game_: HasGame):
         super().__init__(game_)
         self.is_enabled = False
         self.next_enemy_time: int | None = None
@@ -380,12 +380,15 @@ class Game:
         self.curr_tick = value
 
 
+HasGame = Union[UsesGame, Game]
+
+
 if __name__ == '__main__':
     print('Hello world')
 
 
     class EveryNTicks(UsesGame):
-        def __init__(self, game_: Game, n: int, offset=1):
+        def __init__(self, game_: HasGame, n: int, offset=1):
             super().__init__(game_)
             self.n = n
             self.started_at = self.curr_tick + offset
@@ -646,7 +649,7 @@ if __name__ == '__main__':
 
 
     class GameOver(GamePgSprite):
-        def __init__(self, game: Game, text: str):
+        def __init__(self, game: HasGame, text: str):
             self.set_game(game)
             super().__init__(None, self.draw_group)
             self.text = text
@@ -661,7 +664,7 @@ if __name__ == '__main__':
         image: pg.surface.Surface
         rect: pg.Rect
 
-        def __init__(self, game: Game, text: str = None):
+        def __init__(self, game: HasGame, text: str = None):
             self.set_game(game)
             super().__init__(None, self.draw_group)
             self.topleft = Vec2(5, 5)
@@ -687,7 +690,7 @@ if __name__ == '__main__':
         image: pg.surface.Surface
         rect: pg.Rect
 
-        def __init__(self, game: Game | UsesGame, text: str):
+        def __init__(self, game: HasGame, text: str):
             self.set_game(game)
             super().__init__(None, self.draw_group)
             self.topright = Vec2(self.screen.get_width() - 5, 5)
@@ -702,6 +705,7 @@ if __name__ == '__main__':
         def update(self, *args: Any, **kwargs: Any) -> None:
             if self.curr_tick % 5 == 1:
                 self.set_text(f'FPS: {self.game.clock.get_fps():.2f}')
+
 
     class Tutorial(UsesGame):
         def __init__(self, game: Game | UsesGame):
