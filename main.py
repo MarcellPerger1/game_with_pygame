@@ -227,7 +227,6 @@ class Fonts:
         cls.monospace = pygame.font.SysFont('monospace', 18)
 
 
-# noinspection PyMethodMayBeStatic
 class Game:
     curr_tick: int
     frame_start: float
@@ -248,6 +247,7 @@ class Game:
         self._init_components()
         self._init_objects()
 
+    # noinspection PyMethodMayBeStatic
     def _init_pygame(self):
         print('[INFO] Initializing modules')
         n_pass, n_fail = pygame.init()
