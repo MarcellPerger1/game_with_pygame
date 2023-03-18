@@ -80,6 +80,15 @@ class DrawableSprite(GroupMemberSprite):
     image: pg.Surface | None
     surf: pg.Surface | None
 
+    def __init__(self, game: HasGame | None, *groups: pg.sprite.AbstractGroup,
+                 surf: pg.Surface = None, rect: pg.Rect = None,
+                 in_root: bool = None, in_display: bool = None):
+        super().__init__(game, *groups, in_root=in_root, in_display=in_display)
+        if surf is not None:
+            self.surf = surf
+        if rect is not None:
+            self.rect = rect
+
 
 class CommonSprite(DrawableSprite):
     """This is a base class for most sprites
