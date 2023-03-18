@@ -340,11 +340,11 @@ class Game:
     def draw_objects(self):
         if USE_FLIP:
             self.root_group.draw(self.screen)
-            TurretRangeIndicator.draw_all()
+            TurretRangeIndicator.draw_all(self)
             pg.display.flip()
         else:
             dirty = self.root_group.draw(self.screen)
-            TurretRangeIndicator.draw_all()
+            TurretRangeIndicator.draw_all(self)
             dirty += self.dirty_this_frame
             pg.display.update(dirty)
 
@@ -438,10 +438,11 @@ if __name__ == '__main__':
             if self.turrets > 0:
                 mouse_pos = Vec2(pg.mouse.get_pos())
                 if not pg.sprite.spritecollide(
-                        HasRect(Turret.get_virtual_rect(mouse_pos)), game.turrets, False):
+                        HasRect(Turret.get_virtual_rect(mouse_pos)),
+                        self.game.turrets, False):
                     Turret(self, mouse_pos)
                     self.turrets -= 1
-                    game.turrets_text.update()
+                    self.game.turrets_text.update()
 
         def on_kill_enemy(self, _enemy: Enemy, _bullet: Bullet):
             self.enemies_killed += 1
@@ -449,7 +450,7 @@ if __name__ == '__main__':
             if self.turret_parts >= 1.0:
                 extra_turrets, self.turret_parts = divmod(self.turret_parts, 1)
                 self.turrets += round(extra_turrets)  # not int() coz fp precision
-                game.turrets_text.update()
+                self.game.turrets_text.update()
 
 
     class Collectable(CommonSprite):
@@ -463,7 +464,7 @@ if __name__ == '__main__':
             """This method is called when this has been collected (after being kill-ed)"""
 
         def update(self, *args: Any, **kwargs: Any) -> None:
-            if pg.sprite.collide_rect(self, game.player):
+            if pg.sprite.collide_rect(self, self.game.player):
                 self.kill()
                 self.on_collect()
 
@@ -472,8 +473,8 @@ if __name__ == '__main__':
             pg.draw.rect(self.surf, 'darkolivegreen3', self.surf.get_rect())
 
         def on_collect(self):
-            game.player.turrets += 1
-            game.turrets_text.update()
+            self.game.player.turrets += 1
+            self.game.turrets_text.update()
 
 
     class Turret(CommonSprite):
@@ -494,14 +495,14 @@ if __name__ == '__main__':
 
         def can_shoot(self):
             return (self.shot_on_tick is None
-                    or game.curr_tick >= self.shot_on_tick + self.interval)
+                    or self.curr_tick >= self.shot_on_tick + self.interval)
 
         def update(self, *args: Any, **kwargs: Any) -> None:
             if self.can_shoot():
-                target: Enemy = nearest_of_group(self.pos, game.enemies)
+                target: Enemy = nearest_of_group(self.pos, self.game.enemies)
                 if target is not None and self.can_shoot_enemy(target):
                     Bullet(self, self.pos, target.pos)
-                    self.shot_on_tick = game.curr_tick
+                    self.shot_on_tick = self.curr_tick
 
         def can_shoot_enemy(self, enemy: Enemy):
             return self.pos.distance_squared_to(enemy.pos) <= TURRET_RANGE * TURRET_RANGE
@@ -537,7 +538,7 @@ if __name__ == '__main__':
             pass  # already draw when surface created
 
         def on_create(self):
-            game.dirty_this_frame.append(self.rect)
+            self.game.dirty_this_frame.append(self.rect)
             self.request_redraw(self)
 
         @classmethod
@@ -547,20 +548,20 @@ if __name__ == '__main__':
             cls.need_redraw += args
 
         @classmethod
-        def make_overlay_surf(cls, remake_force=False):
+        def make_overlay_surf(cls, game: Game, remake_force=False):
             if cls.overlays_surf is None or remake_force:
                 cls.overlays_surf = pg.Surface(game.screen.get_size(), pg.SRCALPHA)
 
         @classmethod
-        def draw_all(cls):
-            cls.update_overlays_surf()
-            cls.blit_all()
+        def draw_all(cls, game: Game):
+            cls.update_overlays_surf(game)
+            cls.blit_all(game)
 
         @classmethod
-        def update_overlays_surf(cls):
+        def update_overlays_surf(cls, game: Game):
             if not cls.need_redraw or not SHOW_TURRET_RANGE:
                 return
-            cls.make_overlay_surf()
+            cls.make_overlay_surf(game)
             if cls.need_redraw == 'all':
                 cls.overlays_surf.fill((0, 0, 0, 0))
                 for t in game.turret_range_overlays:
@@ -572,7 +573,7 @@ if __name__ == '__main__':
             cls.need_redraw = []
 
         @classmethod
-        def blit_all(cls):
+        def blit_all(cls, game: Game):
             return game.screen.blit(cls.overlays_surf, game.screen.get_rect())
 
 
@@ -598,7 +599,7 @@ if __name__ == '__main__':
             self.kill()
 
         def update(self, *args: Any, **kwargs: Any) -> None:
-            enemy: CommonEnemy | None = pg.sprite.spritecollideany(self, game.enemies)
+            enemy: CommonEnemy | None = pg.sprite.spritecollideany(self, self.game.enemies)
             if enemy is not None:
                 self.on_hit_enemy(enemy)
                 return
@@ -618,17 +619,16 @@ if __name__ == '__main__':
 
         def on_hit_by_bullet(self, bullet: Bullet):
             self.kill()
-            game.on_kill_enemy(self, bullet)
+            self.game.on_kill_enemy(self, bullet)
 
-        # noinspection PyMethodMayBeStatic
         def on_collide_player(self):
-            game.player.is_dead = True
-            GameOver(game, f'Game Over\nScore: {game.player.enemies_killed}')
+            self.game.player.is_dead = True
+            GameOver(self, f'Game Over\nScore: {self.game.player.enemies_killed}')
             print('You died')
 
         def update(self, *args: Any, **kwargs: Any) -> None:
             """This update function handles killing player on contact"""
-            if pg.sprite.collide_rect(self, game.player):
+            if pg.sprite.collide_rect(self, self.game.player):
                 self.on_collide_player()
 
     class Enemy(CommonEnemy):
@@ -644,7 +644,7 @@ if __name__ == '__main__':
         def update(self, *args: Any, **kwargs: Any) -> None:
             super().update(*args, **kwargs)
             if not self.immobile:
-                self.pos = self.pos.move_towards(game.player.pos, ENEMY_SPEED)
+                self.pos = self.pos.move_towards(self.game.player.pos, ENEMY_SPEED)
                 self.rect.center = self.pos
 
     class EnemyWithHealth(CommonEnemy):
