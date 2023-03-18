@@ -74,7 +74,14 @@ class GroupMemberSprite(GamePgSprite):
         return tuple(extra)
 
 
-class CommonSprite(GroupMemberSprite):
+class DrawableSprite(GroupMemberSprite):
+    # all abstract instances (but there's no way for making them actually abstract)
+    rect: pg.Rect
+    image: pg.Surface | None
+    surf: pg.Surface | None
+
+
+class CommonSprite(DrawableSprite):
     """This is a base class for most sprites
     and needs to be subclassed to have any real use"""
     size: Vec2 = None
@@ -577,7 +584,7 @@ class Bullet(CommonSprite):
         else:
             # use less memory, as it can now free self.surf
             # (set in CommonSprite.__init__)
-            self.surf = None
+            self.surf = self.image = None
 
     def on_hit_enemy(self, enemy: CommonEnemy):
         enemy.on_hit_by_bullet(self)
