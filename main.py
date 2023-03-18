@@ -488,7 +488,7 @@ if __name__ == '__main__':
             self.shot_on_tick = None
             if SHOW_TURRET_RANGE:
                 TurretRangeIndicator(self, self.pos)
-            game.tutorial.place_turret()
+            self.game.tutorial.place_turret()
 
         def draw_sprite(self):
             pg.draw.rect(self.surf, 'darkgreen', self.surf.get_rect())
