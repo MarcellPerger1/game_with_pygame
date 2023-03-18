@@ -95,11 +95,13 @@ class CommonSprite(GamePgSprite):
 
         Initialise this sprite with image and rect attributes
 
+        :param game: The `Game` object
         :param pos: Center of sprite
         :param groups: The groups to add this to (root_group is automatically
             included unless specified otherwise, see not_in_root)
         :param size:  The size of this sprite; can also be on the class
-        :param not_in_root: If True, doesn't add it to root_group
+        :param in_root: If False, doesn't add it to root_group
+        :param surf: The surface to use, overrides `make_surface`
         """
         self.set_game(game, method_name='__init__')
         self.in_root = option(in_root, self.in_root)
