@@ -385,346 +385,350 @@ class Game:
 HasGame = Union[UsesGame, Game]
 
 
-if __name__ == '__main__':
-    print('Hello world')
+class EveryNTicks(UsesGame):
+    def __init__(self, game_: HasGame, n: int, offset=1):
+        super().__init__(game_)
+        self.n = n
+        self.started_at = self.curr_tick + offset
+
+    def is_this_frame(self):
+        return (self.curr_tick >= self.started_at
+                and (self.curr_tick - self.started_at) % self.n == 0)
 
 
-    class EveryNTicks(UsesGame):
-        def __init__(self, game_: HasGame, n: int, offset=1):
-            super().__init__(game_)
-            self.n = n
-            self.started_at = self.curr_tick + offset
+class Player(CommonSprite):
+    size = Vec2(P_RADIUS * 2, P_RADIUS * 2)
 
-        def is_this_frame(self):
-            return (self.curr_tick >= self.started_at
-                    and (self.curr_tick - self.started_at) % self.n == 0)
+    def __init__(self, game: HasGame, pos: Vec2):
+        super().__init__(game, pos)
+        self.turrets = 0
+        self.is_dead = False
+        self.enemies_killed = 0
+        self.turret_parts = 0.0
 
+    def draw_sprite(self):
+        pg.draw.circle(self.surf, 'blue', self.size / 2, P_RADIUS)
 
-    class Player(CommonSprite):
-        size = Vec2(P_RADIUS * 2, P_RADIUS * 2)
+    def handle_movement(self):
+        keys = pg.key.get_pressed()
+        m = Vec2()
+        if keys[pg.K_DOWN] or keys[pg.K_s]:
+            m += Vec2(0, 1)
+        if keys[pg.K_UP] or keys[pg.K_w]:
+            m += Vec2(0, -1)
+        if keys[pg.K_LEFT] or keys[pg.K_a]:
+            m += Vec2(-1, 0)
+        if keys[pg.K_RIGHT] or keys[pg.K_d]:
+            m += Vec2(1, 0)
+        if m.length_squared() != 0:
+            m = m.normalize() * SPEED
+            self.set_pos(self.pos + m)
 
-        def __init__(self, game: HasGame, pos: Vec2):
-            super().__init__(game, pos)
-            self.turrets = 0
-            self.is_dead = False
-            self.enemies_killed = 0
-            self.turret_parts = 0.0
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        self.handle_movement()
+        mouse = pg.mouse.get_pressed()
+        if mouse[0]:
+            self.while_left_click()
 
-        def draw_sprite(self):
-            pg.draw.circle(self.surf, 'blue', self.size / 2, P_RADIUS)
-
-        def handle_movement(self):
-            keys = pg.key.get_pressed()
-            m = Vec2()
-            if keys[pg.K_DOWN] or keys[pg.K_s]:
-                m += Vec2(0, 1)
-            if keys[pg.K_UP] or keys[pg.K_w]:
-                m += Vec2(0, -1)
-            if keys[pg.K_LEFT] or keys[pg.K_a]:
-                m += Vec2(-1, 0)
-            if keys[pg.K_RIGHT] or keys[pg.K_d]:
-                m += Vec2(1, 0)
-            if m.length_squared() != 0:
-                m = m.normalize() * SPEED
-                self.set_pos(self.pos + m)
-
-        def update(self, *args: Any, **kwargs: Any) -> None:
-            self.handle_movement()
-            mouse = pg.mouse.get_pressed()
-            if mouse[0]:
-                self.while_left_click()
-
-        def while_left_click(self):
-            if self.turrets > 0:
-                mouse_pos = Vec2(pg.mouse.get_pos())
-                if not pg.sprite.spritecollide(
-                        HasRect(Turret.get_virtual_rect(mouse_pos)),
-                        self.game.turrets, False):
-                    Turret(self, mouse_pos)
-                    self.turrets -= 1
-                    self.game.turrets_text.update()
-
-        def on_kill_enemy(self, _enemy: Enemy, _bullet: Bullet):
-            self.enemies_killed += 1
-            self.turret_parts += 0.2
-            if self.turret_parts >= 1.0:
-                extra_turrets, self.turret_parts = divmod(self.turret_parts, 1)
-                self.turrets += round(extra_turrets)  # not int() coz fp precision
+    def while_left_click(self):
+        if self.turrets > 0:
+            mouse_pos = Vec2(pg.mouse.get_pos())
+            if not pg.sprite.spritecollide(
+                    HasRect(Turret.get_virtual_rect(mouse_pos)),
+                    self.game.turrets, False):
+                Turret(self, mouse_pos)
+                self.turrets -= 1
                 self.game.turrets_text.update()
 
-
-    class Collectable(CommonSprite):
-        size = Vec2(12, 12)  # 'standard' size for a collectable; override this
-
-        def __init__(self, game: HasGame, pos: Vec2):
-            super().__init__(game, pos)
-
-        # noinspection PyMethodMayBeStatic
-        def on_collect(self):
-            """This method is called when this has been collected (after being kill-ed)"""
-
-        def update(self, *args: Any, **kwargs: Any) -> None:
-            if pg.sprite.collide_rect(self, self.game.player):
-                self.kill()
-                self.on_collect()
-
-    class TurretItem(Collectable):
-        def draw_sprite(self):
-            pg.draw.rect(self.surf, 'darkolivegreen3', self.surf.get_rect())
-
-        def on_collect(self):
-            self.game.player.turrets += 1
+    def on_kill_enemy(self, _enemy: Enemy, _bullet: Bullet):
+        self.enemies_killed += 1
+        self.turret_parts += 0.2
+        if self.turret_parts >= 1.0:
+            extra_turrets, self.turret_parts = divmod(self.turret_parts, 1)
+            self.turrets += round(extra_turrets)  # not int() coz fp precision
             self.game.turrets_text.update()
 
 
-    class Turret(CommonSprite):
-        size = Vec2(20, 20)
+class Collectable(CommonSprite):
+    size = Vec2(12, 12)  # 'standard' size for a collectable; override this
 
-        def __init__(self, game: HasGame, pos: Vec2, *groups: pg.sprite.AbstractGroup,
-                     interval: int = TURRET_INTERVAL):
-            self.set_game(game)
-            super().__init__(None, pos, self.game.turrets, *groups)
-            self.interval = interval
-            self.shot_on_tick = None
-            if SHOW_TURRET_RANGE:
-                TurretRangeIndicator(self, self.pos)
-            self.game.tutorial.place_turret()
+    def __init__(self, game: HasGame, pos: Vec2):
+        super().__init__(game, pos)
 
-        def draw_sprite(self):
-            pg.draw.rect(self.surf, 'darkgreen', self.surf.get_rect())
+    # noinspection PyMethodMayBeStatic
+    def on_collect(self):
+        """This method is called when this has been collected (after being kill-ed)"""
 
-        def can_shoot(self):
-            return (self.shot_on_tick is None
-                    or self.curr_tick >= self.shot_on_tick + self.interval)
-
-        def update(self, *args: Any, **kwargs: Any) -> None:
-            if self.can_shoot():
-                target: Enemy = nearest_of_group(self.pos, self.game.enemies)
-                if target is not None and self.can_shoot_enemy(target):
-                    Bullet(self, self.pos, target.pos)
-                    self.shot_on_tick = self.curr_tick
-
-        def can_shoot_enemy(self, enemy: Enemy):
-            return self.pos.distance_squared_to(enemy.pos) <= TURRET_RANGE * TURRET_RANGE
-
-    class TurretRangeIndicator(CommonSprite):
-        size = Vec2(TURRET_RANGE * 2, TURRET_RANGE * 2)
-        common_surf: pg.surface.Surface = None
-        """The surface that is drawn for each overlay"""
-
-        need_redraw: list[TurretRangeIndicator] | Literal['all'] = 'all'
-        overlays_surf: pg.Surface = None
-
-        def __init__(self, game: HasGame, pos: Vec2, *groups: pg.sprite.AbstractGroup):
-            self.set_game(game)
-            super().__init__(None, pos, self.game.turret_range_overlays,
-                             *groups, in_root=False)
-            self.on_create()
-
-        def make_surface(self):
-            if self.common_surf is None:
-                self.make_common_surf()
-            return self.common_surf
-
-        def make_common_surf(self):
-            self.common_surf = pg.surface.Surface(self.size, pg.SRCALPHA)
-            pg.draw.circle(self.common_surf, pg.color.Color(0, 255, 0, 60),
-                           self.size / 2, TURRET_RANGE)
-
-        def draw_overlay(self, target: pg.surface.Surface):
-            return target.blit(self.surf, self.rect, None, special_flags=pg.BLEND_RGBA_MAX)
-
-        def draw_sprite(self):
-            pass  # already draw when surface created
-
-        def on_create(self):
-            self.game.dirty_this_frame.append(self.rect)
-            self.request_redraw(self)
-
-        @classmethod
-        def request_redraw(cls, *args: TurretRangeIndicator):
-            if cls.need_redraw == 'all':
-                return
-            cls.need_redraw += args
-
-        @classmethod
-        def make_overlay_surf(cls, game: Game, remake_force=False):
-            if cls.overlays_surf is None or remake_force:
-                cls.overlays_surf = pg.Surface(game.screen.get_size(), pg.SRCALPHA)
-
-        @classmethod
-        def draw_all(cls, game: Game):
-            cls.update_overlays_surf(game)
-            cls.blit_all(game)
-
-        @classmethod
-        def update_overlays_surf(cls, game: Game):
-            if not cls.need_redraw or not SHOW_TURRET_RANGE:
-                return
-            cls.make_overlay_surf(game)
-            if cls.need_redraw == 'all':
-                cls.overlays_surf.fill((0, 0, 0, 0))
-                for t in game.turret_range_overlays:
-                    t: TurretRangeIndicator
-                    t.draw_overlay(cls.overlays_surf)
-            else:
-                for t in cls.need_redraw:
-                    t.draw_overlay(cls.overlays_surf)
-            cls.need_redraw = []
-
-        @classmethod
-        def blit_all(cls, game: Game):
-            return game.screen.blit(cls.overlays_surf, game.screen.get_rect())
-
-
-    class Bullet(CommonSprite):
-        size = Vec2(6, 6)
-
-        def __init__(self, game: HasGame, pos: Vec2, target: Vec2,
-                     *groups: pg.sprite.AbstractGroup):
-            self.set_game(game)
-            super().__init__(None, pos, self.game.bullets, *groups, in_root=SHOW_BULLETS)
-            self.target = target
-
-        def draw_sprite(self):
-            if SHOW_BULLETS:
-                pg.draw.rect(self.surf, 'red4', self.surf.get_rect())
-            else:
-                # use less memory, as it can now free self.surf
-                # (set in CommonSprite.__init__)
-                self.surf = None
-
-        def on_hit_enemy(self, enemy: CommonEnemy):
-            enemy.on_hit_by_bullet(self)
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        if pg.sprite.collide_rect(self, self.game.player):
             self.kill()
+            self.on_collect()
 
-        def update(self, *args: Any, **kwargs: Any) -> None:
-            enemy: CommonEnemy | None = pg.sprite.spritecollideany(self, self.game.enemies)
-            if enemy is not None:
-                self.on_hit_enemy(enemy)
-                return
-            if self.pos == self.target:
-                self.kill()
-            self.pos = self.pos.move_towards(self.target, BULLET_SPEED)
+
+class TurretItem(Collectable):
+    def draw_sprite(self):
+        pg.draw.rect(self.surf, 'darkolivegreen3', self.surf.get_rect())
+
+    def on_collect(self):
+        self.game.player.turrets += 1
+        self.game.turrets_text.update()
+
+
+class Turret(CommonSprite):
+    size = Vec2(20, 20)
+
+    def __init__(self, game: HasGame, pos: Vec2, *groups: pg.sprite.AbstractGroup,
+                 interval: int = TURRET_INTERVAL):
+        self.set_game(game)
+        super().__init__(None, pos, self.game.turrets, *groups)
+        self.interval = interval
+        self.shot_on_tick = None
+        if SHOW_TURRET_RANGE:
+            TurretRangeIndicator(self, self.pos)
+        self.game.tutorial.place_turret()
+
+    def draw_sprite(self):
+        pg.draw.rect(self.surf, 'darkgreen', self.surf.get_rect())
+
+    def can_shoot(self):
+        return (self.shot_on_tick is None
+                or self.curr_tick >= self.shot_on_tick + self.interval)
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        if self.can_shoot():
+            target: Enemy = nearest_of_group(self.pos, self.game.enemies)
+            if target is not None and self.can_shoot_enemy(target):
+                Bullet(self, self.pos, target.pos)
+                self.shot_on_tick = self.curr_tick
+
+    def can_shoot_enemy(self, enemy: Enemy):
+        return self.pos.distance_squared_to(enemy.pos) <= TURRET_RANGE * TURRET_RANGE
+
+
+class TurretRangeIndicator(CommonSprite):
+    size = Vec2(TURRET_RANGE * 2, TURRET_RANGE * 2)
+    common_surf: pg.surface.Surface = None
+    """The surface that is drawn for each overlay"""
+
+    need_redraw: list[TurretRangeIndicator] | Literal['all'] = 'all'
+    overlays_surf: pg.Surface = None
+
+    def __init__(self, game: HasGame, pos: Vec2, *groups: pg.sprite.AbstractGroup):
+        self.set_game(game)
+        super().__init__(None, pos, self.game.turret_range_overlays,
+                         *groups, in_root=False)
+        self.on_create()
+
+    def make_surface(self):
+        if self.common_surf is None:
+            self.make_common_surf()
+        return self.common_surf
+
+    def make_common_surf(self):
+        self.common_surf = pg.surface.Surface(self.size, pg.SRCALPHA)
+        pg.draw.circle(self.common_surf, pg.color.Color(0, 255, 0, 60),
+                       self.size / 2, TURRET_RANGE)
+
+    def draw_overlay(self, target: pg.surface.Surface):
+        return target.blit(self.surf, self.rect, None, special_flags=pg.BLEND_RGBA_MAX)
+
+    def draw_sprite(self):
+        pass  # already draw when surface created
+
+    def on_create(self):
+        self.game.dirty_this_frame.append(self.rect)
+        self.request_redraw(self)
+
+    @classmethod
+    def request_redraw(cls, *args: TurretRangeIndicator):
+        if cls.need_redraw == 'all':
+            return
+        cls.need_redraw += args
+
+    @classmethod
+    def make_overlay_surf(cls, game: Game, remake_force=False):
+        if cls.overlays_surf is None or remake_force:
+            cls.overlays_surf = pg.Surface(game.screen.get_size(), pg.SRCALPHA)
+
+    @classmethod
+    def draw_all(cls, game: Game):
+        cls.update_overlays_surf(game)
+        cls.blit_all(game)
+
+    @classmethod
+    def update_overlays_surf(cls, game: Game):
+        if not cls.need_redraw or not SHOW_TURRET_RANGE:
+            return
+        cls.make_overlay_surf(game)
+        if cls.need_redraw == 'all':
+            cls.overlays_surf.fill((0, 0, 0, 0))
+            for t in game.turret_range_overlays:
+                t: TurretRangeIndicator
+                t.draw_overlay(cls.overlays_surf)
+        else:
+            for t in cls.need_redraw:
+                t.draw_overlay(cls.overlays_surf)
+        cls.need_redraw = []
+
+    @classmethod
+    def blit_all(cls, game: Game):
+        return game.screen.blit(cls.overlays_surf, game.screen.get_rect())
+
+
+class Bullet(CommonSprite):
+    size = Vec2(6, 6)
+
+    def __init__(self, game: HasGame, pos: Vec2, target: Vec2,
+                 *groups: pg.sprite.AbstractGroup):
+        self.set_game(game)
+        super().__init__(None, pos, self.game.bullets, *groups, in_root=SHOW_BULLETS)
+        self.target = target
+
+    def draw_sprite(self):
+        if SHOW_BULLETS:
+            pg.draw.rect(self.surf, 'red4', self.surf.get_rect())
+        else:
+            # use less memory, as it can now free self.surf
+            # (set in CommonSprite.__init__)
+            self.surf = None
+
+    def on_hit_enemy(self, enemy: CommonEnemy):
+        enemy.on_hit_by_bullet(self)
+        self.kill()
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        enemy: CommonEnemy | None = pg.sprite.spritecollideany(self, self.game.enemies)
+        if enemy is not None:
+            self.on_hit_enemy(enemy)
+            return
+        if self.pos == self.target:
+            self.kill()
+        self.pos = self.pos.move_towards(self.target, BULLET_SPEED)
+        self.rect.center = self.pos
+
+
+class CommonEnemy(CommonSprite):
+    def __init__(self, game: HasGame, pos: Vec2,
+                 *groups: pg.sprite.AbstractGroup,
+                 is_in_enemies=True, **kwargs):
+        self.set_game(game)
+        groups = (*groups, self.game.enemies) if is_in_enemies else groups
+        super().__init__(None, pos, *groups, **kwargs)
+
+    def on_hit_by_bullet(self, bullet: Bullet):
+        self.kill()
+        self.game.on_kill_enemy(self, bullet)
+
+    def on_collide_player(self):
+        self.game.player.is_dead = True
+        GameOver(self, f'Game Over\nScore: {self.game.player.enemies_killed}')
+        print('You died')
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        """This update function handles killing player on contact"""
+        if pg.sprite.collide_rect(self, self.game.player):
+            self.on_collide_player()
+
+
+class Enemy(CommonEnemy):
+    size = Vec2(30, 30)
+
+    def __init__(self, game: HasGame, pos: Vec2, immobile=False):
+        super().__init__(game, pos)
+        self.immobile = immobile
+
+    def draw_sprite(self):
+        pg.draw.rect(self.surf, 'red', self.surf.get_rect())
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        super().update(*args, **kwargs)
+        if not self.immobile:
+            self.pos = self.pos.move_towards(self.game.player.pos, ENEMY_SPEED)
             self.rect.center = self.pos
 
 
-    class CommonEnemy(CommonSprite):
-        def __init__(self, game: HasGame, pos: Vec2,
-                     *groups: pg.sprite.AbstractGroup,
-                     is_in_enemies=True, **kwargs):
-            self.set_game(game)
-            groups = (*groups, self.game.enemies) if is_in_enemies else groups
-            super().__init__(None, pos, *groups, **kwargs)
+class EnemyWithHealth(CommonEnemy):
+    size = Vec2(30, 30)
 
-        def on_hit_by_bullet(self, bullet: Bullet):
-            self.kill()
-            self.game.on_kill_enemy(self, bullet)
-
-        def on_collide_player(self):
-            self.game.player.is_dead = True
-            GameOver(self, f'Game Over\nScore: {self.game.player.enemies_killed}')
-            print('You died')
-
-        def update(self, *args: Any, **kwargs: Any) -> None:
-            """This update function handles killing player on contact"""
-            if pg.sprite.collide_rect(self, self.game.player):
-                self.on_collide_player()
-
-    class Enemy(CommonEnemy):
-        size = Vec2(30, 30)
-
-        def __init__(self, game: HasGame, pos: Vec2, immobile=False):
-            super().__init__(game, pos)
-            self.immobile = immobile
-
-        def draw_sprite(self):
-            pg.draw.rect(self.surf, 'red', self.surf.get_rect())
-
-        def update(self, *args: Any, **kwargs: Any) -> None:
-            super().update(*args, **kwargs)
-            if not self.immobile:
-                self.pos = self.pos.move_towards(self.game.player.pos, ENEMY_SPEED)
-                self.rect.center = self.pos
-
-    class EnemyWithHealth(CommonEnemy):
-        size = Vec2(30, 30)
-
-        def __init__(self, game: HasGame, pos: Vec2, health: float, immobile=False):
-            super().__init__(game, pos)
-            self.health = health
-            self.immobile = immobile
+    def __init__(self, game: HasGame, pos: Vec2, health: float, immobile=False):
+        super().__init__(game, pos)
+        self.health = health
+        self.immobile = immobile
 
 
-    class GameOver(GamePgSprite):
-        def __init__(self, game: HasGame, text: str):
-            self.set_game(game)
-            super().__init__(None, self.draw_group)
-            self.text = text
-            self.pos = self.screen.get_rect().center
-            self.surf = self.image = render_text(
-                self.fonts.huge, self.text, color='black', justify='center')
-            self.rect = self.surf.get_rect(center=self.pos)
-
-    class TurretsText(GamePgSprite):
-        text: str
-        surf: pg.surface.Surface
-        image: pg.surface.Surface
-        rect: pg.Rect
-
-        def __init__(self, game: HasGame, text: str = None):
-            self.set_game(game)
-            super().__init__(None, self.draw_group)
-            self.topleft = Vec2(5, 5)
-            if text is None:
-                text = 'Turrets: 0'
-            self.set_text(text)
-
-        def set_text(self, text: str):
-            self.text = text
-            self.surf = self.image = self.fonts.monospace.render(
-                self.text, True, pg.color.Color('black'))
-            self.rect = self.surf.get_rect(topleft=self.topleft)
-
-        @overload
-        def update(self): ...
-
-        def update(self, *args: Any, **kwargs: Any) -> None:
-            self.set_text(f'Turrets: {self.game.player.turrets}')
-
-    class FpsText(GamePgSprite):
-        text: str
-        surf: pg.surface.Surface
-        image: pg.surface.Surface
-        rect: pg.Rect
-
-        def __init__(self, game: HasGame, text: str):
-            self.set_game(game)
-            super().__init__(None, self.draw_group)
-            self.topright = Vec2(self.screen.get_width() - 5, 5)
-            self.set_text(text)
-
-        def set_text(self, text: str):
-            self.text = text
-            self.surf = self.image = self.fonts.monospace.render(
-                self.text, True, pg.color.Color('black'))
-            self.rect = self.surf.get_rect(topright=self.topright)
-
-        def update(self, *args: Any, **kwargs: Any) -> None:
-            if self.curr_tick % 5 == 1:
-                self.set_text(f'FPS: {self.game.clock.get_fps():.2f}')
+class GameOver(GamePgSprite):
+    def __init__(self, game: HasGame, text: str):
+        self.set_game(game)
+        super().__init__(None, self.draw_group)
+        self.text = text
+        self.pos = self.screen.get_rect().center
+        self.surf = self.image = render_text(
+            self.fonts.huge, self.text, color='black', justify='center')
+        self.rect = self.surf.get_rect(center=self.pos)
 
 
-    class Tutorial(UsesGame):
-        def __init__(self, game: Game | UsesGame):
-            super().__init__(game)
+class TurretsText(GamePgSprite):
+    text: str
+    surf: pg.surface.Surface
+    image: pg.surface.Surface
+    rect: pg.Rect
 
-        @trigger_once
-        def place_turret(self):
-            self.game.enemy_spawner.is_enabled = True
-            self.game.initial_enemy.immobile = False
+    def __init__(self, game: HasGame, text: str = None):
+        self.set_game(game)
+        super().__init__(None, self.draw_group)
+        self.topleft = Vec2(5, 5)
+        if text is None:
+            text = 'Turrets: 0'
+        self.set_text(text)
+
+    def set_text(self, text: str):
+        self.text = text
+        self.surf = self.image = self.fonts.monospace.render(
+            self.text, True, pg.color.Color('black'))
+        self.rect = self.surf.get_rect(topleft=self.topleft)
+
+    @overload
+    def update(self): ...
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        self.set_text(f'Turrets: {self.game.player.turrets}')
 
 
-    game = Game()
-    game.init()
-    game.mainloop()
+class FpsText(GamePgSprite):
+    text: str
+    surf: pg.surface.Surface
+    image: pg.surface.Surface
+    rect: pg.Rect
+
+    def __init__(self, game: HasGame, text: str):
+        self.set_game(game)
+        super().__init__(None, self.draw_group)
+        self.topright = Vec2(self.screen.get_width() - 5, 5)
+        self.set_text(text)
+
+    def set_text(self, text: str):
+        self.text = text
+        self.surf = self.image = self.fonts.monospace.render(
+            self.text, True, pg.color.Color('black'))
+        self.rect = self.surf.get_rect(topright=self.topright)
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        if self.curr_tick % 5 == 1:
+            self.set_text(f'FPS: {self.game.clock.get_fps():.2f}')
+
+
+class Tutorial(UsesGame):
+    def __init__(self, game: Game | UsesGame):
+        super().__init__(game)
+
+    @trigger_once
+    def place_turret(self):
+        self.game.enemy_spawner.is_enabled = True
+        self.game.initial_enemy.immobile = False
+
+
+if __name__ == '__main__':
+    print('Hello world')
+    _game = Game()
+    _game.init()
+    _game.mainloop()
