@@ -39,7 +39,6 @@ class PGExit(BaseException):
     pass
 
 
-# noinspection PyShadowingNames
 class UsesGame:
     game: Game = None
 
@@ -75,7 +74,6 @@ class UsesGame:
         return self.game.screen
 
 
-# noinspection PyShadowingNames
 class GamePgSprite(pg.sprite.Sprite, UsesGame):
     """Class inheriting from both `pygame.sprite.Sprite` and `UsesGame`"""
     def __init__(self, game: HasGame | None, *groups: pg.sprite.AbstractGroup):
@@ -87,10 +85,12 @@ class CommonSprite(GamePgSprite):
     """This is a base class for most sprites
     and needs to be subclassed to have any real use"""
     size: Vec2 = None
-    in_root = True
+    in_display: bool = None
+    in_root: bool = True
 
     def __init__(self, game: HasGame | None, pos: Vec2, *groups: pg.sprite.AbstractGroup,
-                 size=None, in_display: bool = None, surf: pg.surface.Surface = None):
+                 size=None, in_root: bool = None, in_display: bool = None,
+                 surf: pg.surface.Surface = None):
         """Create this sprite
 
         Initialise this sprite with image and rect attributes
@@ -104,18 +104,32 @@ class CommonSprite(GamePgSprite):
         :param surf: The surface to use, overrides `make_surface`
         """
         self.set_game(game, method_name='__init__')
-        self.in_root = option(in_display, self.in_root)
+        self._set_group_flags(in_root, in_display)
         self.pos = pos
         self.size = option(size, self.size)
-        groups = (self.game.display_group, *groups) if self.in_root else groups
-        super().__init__(None, *groups)
         if self.size is None:
             raise self._err_missing_size("__init__")
+        super().__init__(None, *self.get_extra_groups(), *groups)
         if surf is None:
             surf = self.make_surface()
         self.image = self.surf = surf
         self.rect = self.surf.get_rect(center=self.pos)
         self.draw_sprite()
+
+    def _set_group_flags(self, in_root: bool | None, in_display: bool | None):
+        self.in_root = option(in_root, self.in_root)
+        self.in_display = option(in_display, self.in_display)
+        if self.in_display is None:
+            # if not in root, probably should be in display by default
+            self.in_display = self.in_root
+
+    def get_extra_groups(self):
+        extra = []
+        if self.in_root:
+            extra.append(self.game.root_group)
+        if self.in_display:
+            extra.append(self.game.display_group)
+        return tuple(extra)
 
     def draw_sprite(self):
         """Called to draw the sprite into its local surface -
@@ -249,6 +263,7 @@ class Game:
 
     def _init_groups(self):
         print('[INFO] Initializing groups')
+        self.root_group = pg.sprite.Group()
         # todo should use LayeredUpdates / LayeredDirty
         self.display_group = pg.sprite.RenderUpdates()
         self.enemies = pg.sprite.Group()
