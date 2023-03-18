@@ -11,7 +11,7 @@ from util import option
 from pg_util import rect_from_size, render_text, nearest_of_group
 from containers import HasRect
 from trigger_once import trigger_once
-from perf_mgr import PerfMgr
+from perf import PerfMgr
 
 
 pg = pygame

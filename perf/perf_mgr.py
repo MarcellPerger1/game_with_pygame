@@ -3,7 +3,7 @@ from __future__ import annotations
 import cProfile
 import tracemalloc
 
-from mem_profile import MemProf
+from .mem_profile import MemProf
 
 
 DEBUG_MEMORY = False
