@@ -727,8 +727,12 @@ class Tutorial(UsesGame):
         self.game.initial_enemy.immobile = False
 
 
-if __name__ == '__main__':
+def main():
     print('Hello world')
-    _game = Game()
-    _game.init()
-    _game.mainloop()
+    game = Game()
+    game.init()
+    game.mainloop()
+
+
+if __name__ == '__main__':
+    main()
