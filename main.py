@@ -47,12 +47,37 @@ class GamePgSprite(pg.sprite.Sprite, UsesGame):
         pg.sprite.Sprite.__init__(self, *groups)
 
 
-class CommonSprite(GamePgSprite):
+class GroupMemberSprite(GamePgSprite):
+    """Base class that only handles groups"""
+    in_display: bool = None
+    in_root: bool = True
+
+    def __init__(self, game: HasGame | None, *groups: pg.sprite.AbstractGroup,
+                 in_root: bool = None, in_display: bool = None):
+        self.set_game(game, method_name='__init__')
+        self._set_group_flags(in_root, in_display)
+        super().__init__(None, *self._get_extra_groups(), *groups)
+
+    def _set_group_flags(self, in_root: bool | None, in_display: bool | None):
+        self.in_root = option(in_root, self.in_root)
+        self.in_display = option(in_display, self.in_display)
+        if self.in_display is None:
+            # if not in root, probably should not be in display by default
+            self.in_display = self.in_root
+
+    def _get_extra_groups(self):
+        extra = []
+        if self.in_root:
+            extra.append(self.root_group)
+        if self.in_display:
+            extra.append(self.display_group)
+        return tuple(extra)
+
+
+class CommonSprite(GroupMemberSprite):
     """This is a base class for most sprites
     and needs to be subclassed to have any real use"""
     size: Vec2 = None
-    in_display: bool = None
-    in_root: bool = True
 
     def __init__(self, game: HasGame | None, pos: Vec2, *groups: pg.sprite.AbstractGroup,
                  size=None, in_root: bool = None, in_display: bool = None,
@@ -70,32 +95,16 @@ class CommonSprite(GamePgSprite):
         :param surf: The surface to use, overrides `make_surface`
         """
         self.set_game(game, method_name='__init__')
-        self._set_group_flags(in_root, in_display)
+        super().__init__(None, *groups, in_root=in_root, in_display=in_display)
         self.pos = pos
         self.size = option(size, self.size)
         if self.size is None:
             raise self._err_missing_size("__init__")
-        super().__init__(None, *self.get_extra_groups(), *groups)
         if surf is None:
             surf = self.make_surface()
         self.image = self.surf = surf
         self.rect = self.surf.get_rect(center=self.pos)
         self.draw_sprite()
-
-    def _set_group_flags(self, in_root: bool | None, in_display: bool | None):
-        self.in_root = option(in_root, self.in_root)
-        self.in_display = option(in_display, self.in_display)
-        if self.in_display is None:
-            # if not in root, probably should be in display by default
-            self.in_display = self.in_root
-
-    def get_extra_groups(self):
-        extra = []
-        if self.in_root:
-            extra.append(self.root_group)
-        if self.in_display:
-            extra.append(self.display_group)
-        return tuple(extra)
 
     def draw_sprite(self):
         """Called to draw the sprite into its local surface -
