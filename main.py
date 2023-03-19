@@ -117,7 +117,22 @@ class SizedSprite(DrawableSprite):
         return r
 
 
-class CommonSprite(SizedSprite):
+class PositionedSprite(SizedSprite):
+    pos: Vec2 = None
+
+    def __init__(self, game: HasGame | None, *groups: pg.sprite.AbstractGroup,
+                 surf: pg.Surface = None, rect: pg.Rect = None,
+                 size: Vec2 = None, pos: Vec2 = None,
+                 in_root: bool = None, in_display: bool = None):
+        super().__init__(game, *groups, surf=surf, rect=rect, size=size,
+                         in_root=in_root, in_display=in_display)
+        self.pos = option(pos, self.pos)
+        if self.pos is None:
+            raise TypeError(f"pos must be passed to __init__"
+                            " or set as a class attribute")
+
+
+class CommonSprite(PositionedSprite):
     """This is a base class for most sprites
     and needs to be subclassed to have any real use"""
 
@@ -137,8 +152,8 @@ class CommonSprite(SizedSprite):
         :param surf: The surface to use, overrides `make_surface`
         """
         self.set_game(game, method_name='__init__')
-        super().__init__(None, *groups, size=size, in_root=in_root, in_display=in_display)
-        self.pos = pos
+        super().__init__(None, *groups, size=size, pos=pos,
+                         in_root=in_root, in_display=in_display)
         if surf is None:
             surf = self.make_surface()
         self.image = self.surf = surf
