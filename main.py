@@ -156,20 +156,6 @@ class CommonSprite(SizedSprite):
     def set_pos(self, value: Vec2):
         self.pos = self.rect.center = value
 
-    @classmethod
-    def _err_missing_size(cls, method_name: str) -> NoReturn:
-        return TypeError(f"size must be passed to {method_name}"
-                         " or set as a class attribute")
-
-    @classmethod
-    def get_virtual_rect(cls, pos: Vec2, size: Vec2 = None):
-        if size is None:
-            size = cls.size
-        if size is None:
-            raise cls._err_missing_size("get_virtual_rect")
-        r = rect_from_size(size, center=pos)
-        return r
-
 
 class EnemySpawnMgr(UsesGame):
     def __init__(self, game_: HasGame):
