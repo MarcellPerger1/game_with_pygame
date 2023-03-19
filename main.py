@@ -76,9 +76,9 @@ class GroupMemberSprite(GamePgSprite):
 
 class DrawableSprite(GroupMemberSprite):
     # all abstract instances (but there's no way for making them actually abstract)
-    rect: pg.Rect
-    image: pg.Surface | None
-    surf: pg.Surface | None
+    rect: pg.Rect | None = None
+    image: pg.Surface | None = None
+    surf: pg.Surface | None = None
 
     def __init__(self, game: HasGame | None, *groups: pg.sprite.AbstractGroup,
                  surf: pg.Surface = None, rect: pg.Rect = None,
@@ -132,13 +132,64 @@ class PositionedSprite(SizedSprite):
                             " or set as a class attribute")
 
 
-class CommonSprite(PositionedSprite):
+class SurfaceMakingSprite(PositionedSprite):
+    def __init__(self, game: HasGame | None, *groups: pg.sprite.AbstractGroup,
+                 surf: pg.Surface = None, rect: pg.Rect = None,
+                 size: Vec2 = None, pos: Vec2 = None,
+                 in_root: bool = None, in_display: bool = None):
+        super().__init__(game, *groups, surf=surf, rect=rect, size=size,
+                         pos=pos, in_root=in_root, in_display=in_display)
+        if self.surf is None:
+            self.surf = self.image = self.make_surface()
+
+    def make_surface(self) -> pg.Surface:
+        pass
+
+
+class RectUpdatingSprite(SurfaceMakingSprite):
+    _pos: Vec2 = None
+
+    def __init__(self, game: HasGame | None, *groups: pg.sprite.AbstractGroup,
+                 surf: pg.Surface = None, rect: pg.Rect = None,
+                 size: Vec2 = None, pos: Vec2 = None,
+                 in_root: bool = None, in_display: bool = None):
+        super().__init__(game, *groups, surf=surf, rect=rect, size=size,
+                         pos=pos, in_root=in_root, in_display=in_display)
+        if self.rect is None:
+            self.rect = self.create_rect()
+            self.update_rect()
+
+    def create_rect(self):
+        return self.surf.get_rect()
+
+    def update_rect(self):
+        self.rect.center = self.pos
+
+    @property
+    def pos(self) -> Vec2:
+        return self._pos
+
+    @pos.setter
+    def pos(self, value: Vec2):
+        self.set_pos(value)
+
+    def set_pos(self, value: Vec2):
+        # IMPORTANT: need to use `_pos` to not cause
+        # `pos.setter -> set_pos -> ...` recursion
+        self._pos = value
+        if self.rect is not None:
+            # only call it after it's been initialized some way to prevent this from
+            # being triggered by setting pos in `PositionedSprite`
+            self.update_rect()
+
+
+class CommonSprite(RectUpdatingSprite):
     """This is a base class for most sprites
     and needs to be subclassed to have any real use"""
 
     def __init__(self, game: HasGame | None, pos: Vec2, *groups: pg.sprite.AbstractGroup,
                  size=None, in_root: bool = None, in_display: bool = None,
-                 surf: pg.surface.Surface = None):
+                 surf: pg.surface.Surface = None, rect: pg.Rect = None):
         """Create this sprite
 
         Initialise this sprite with image and rect attributes
@@ -153,11 +204,8 @@ class CommonSprite(PositionedSprite):
         """
         self.set_game(game, method_name='__init__')
         super().__init__(None, *groups, size=size, pos=pos,
-                         in_root=in_root, in_display=in_display)
-        if surf is None:
-            surf = self.make_surface()
-        self.image = self.surf = surf
-        self.rect = self.surf.get_rect(center=self.pos)
+                         in_root=in_root, in_display=in_display,
+                         surf=surf, rect=rect)
         self.draw_sprite()
 
     def draw_sprite(self):
@@ -167,9 +215,6 @@ class CommonSprite(PositionedSprite):
 
     def make_surface(self):
         return pg.surface.Surface(self.size, pg.SRCALPHA)
-
-    def set_pos(self, value: Vec2):
-        self.pos = self.rect.center = value
 
 
 class EnemySpawnMgr(UsesGame):
