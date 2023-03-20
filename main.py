@@ -737,16 +737,18 @@ class EnemyWithHealth(CommonEnemy):
 
 class TextSprite(DrawableSprite):
     pos: Vec2 = None
-    text: str
+    text: str = None
+    always_render = False
 
-    def __init__(self, game: HasGame, text: str, pos: Vec2 = None):
+    def __init__(self, game: HasGame | None, text: str, pos: Vec2 = None):
         super().__init__(game)
         self.pos = pos or self.pos
         self.set_text(text)
 
     def set_text(self, text: str):
-        self.text = text
-        self.set_surf(self.render_text())
+        if text != self.text or self.always_render:
+            self.text = text
+            self.set_surf(self.render_text())
         self.rect = self.get_rect()
 
     def render_text(self) -> pg.Surface:
@@ -770,25 +772,20 @@ class GameOver(TextSprite):
         return self.surf.get_rect(center=self.pos)
 
 
-class TurretsText(GamePgSprite):
-    text: str
-    surf: pg.surface.Surface
-    image: pg.surface.Surface
-    rect: pg.Rect
-
+class TurretsText(TextSprite):
     def __init__(self, game: HasGame, text: str = None):
         self.set_game(game)
-        super().__init__(None, self.root_group, self.display_group)
-        self.topleft = Vec2(5, 5)
         if text is None:
             text = 'Turrets: 0'
+        super().__init__(None, text, Vec2(5, 5))
         self.set_text(text)
 
-    def set_text(self, text: str):
-        self.text = text
-        self.surf = self.image = self.fonts.monospace.render(
+    def render_text(self) -> pg.Surface:
+        return self.fonts.monospace.render(
             self.text, True, pg.color.Color('black'))
-        self.rect = self.surf.get_rect(topleft=self.topleft)
+
+    def get_rect(self) -> pg.Rect:
+        return self.surf.get_rect(topleft=self.pos)
 
     @overload
     def update(self): ...
@@ -797,23 +794,17 @@ class TurretsText(GamePgSprite):
         self.set_text(f'Turrets: {self.player.turrets}')
 
 
-class FpsText(GamePgSprite):
-    text: str
-    surf: pg.surface.Surface
-    image: pg.surface.Surface
-    rect: pg.Rect
-
+class FpsText(TextSprite):
     def __init__(self, game: HasGame, text: str):
         self.set_game(game)
-        super().__init__(None, self.root_group, self.display_group)
-        self.topright = Vec2(self.screen.get_width() - 5, 5)
-        self.set_text(text)
+        super().__init__(None, text, Vec2(self.screen.get_width() - 5, 5))
 
-    def set_text(self, text: str):
-        self.text = text
-        self.surf = self.image = self.fonts.monospace.render(
+    def render_text(self) -> pg.Surface:
+        return self.fonts.monospace.render(
             self.text, True, pg.color.Color('black'))
-        self.rect = self.surf.get_rect(topright=self.topright)
+
+    def get_rect(self) -> pg.Rect:
+        return self.surf.get_rect(topright=self.pos)
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         if self.curr_tick % 5 == 1:

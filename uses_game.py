@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from main import Game, HasGame
+    import pygame as pg
 
 
 class UsesGame:
@@ -28,11 +29,11 @@ class UsesGame:
         return self.game.curr_tick
 
     @property
-    def display_group(self):
+    def display_group(self) -> pg.sprite.AbstractGroup:
         return self.game.display_group
 
     @property
-    def root_group(self):
+    def root_group(self) -> pg.sprite.AbstractGroup:
         return self.game.root_group
 
     @property
