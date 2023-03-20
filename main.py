@@ -7,6 +7,7 @@ from typing import Any, Literal, overload, Union
 
 import pygame as pg
 
+from bullet import Bullet
 from containers import HasRect
 from perf import PerfMgr
 from pg_util import render_text, nearest_of_group
@@ -19,14 +20,12 @@ Vec2 = pg.math.Vector2
 
 
 USE_FLIP = True
-SHOW_BULLETS = True  # todo test the effect of this on performance
 SHOW_TURRET_RANGE = True
 ALLOW_CHEATS = True
 
 FPS = 60
 SPEED = 3.8
 P_RADIUS = 20
-BULLET_SPEED = 25
 TURRET_INTERVAL = 45
 TURRET_RANGE = 140
 ENEMY_SPEED = 2.3
@@ -471,38 +470,6 @@ class TurretRangeIndicator(CommonSprite):
     @classmethod
     def blit_all(cls, game: Game):
         return game.screen.blit(cls.overlays_surf, game.screen.get_rect())
-
-
-class Bullet(CommonSprite):
-    size = Vec2(6, 6)
-
-    def __init__(self, game: HasGame, pos: Vec2, target: Vec2,
-                 *groups: pg.sprite.AbstractGroup):
-        self.set_game(game)
-        super().__init__(None, pos, self.game.bullets, *groups, in_display=SHOW_BULLETS)
-        self.target = target
-
-    def draw_sprite(self):
-        if SHOW_BULLETS:
-            pg.draw.rect(self.surf, 'red4', self.surf.get_rect())
-        else:
-            # use less memory, as it can now free self.surf
-            # (set in CommonSprite.__init__)
-            self.surf = self.image = None
-
-    def on_hit_enemy(self, enemy: CommonEnemy):
-        enemy.on_hit_by_bullet(self)
-        self.kill()
-
-    def update(self, *args: Any, **kwargs: Any) -> None:
-        enemy: CommonEnemy | None = pg.sprite.spritecollideany(self, self.game.enemies)
-        if enemy is not None:
-            self.on_hit_enemy(enemy)
-            return
-        if self.pos == self.target:
-            self.kill()
-        self.pos = self.pos.move_towards(self.target, BULLET_SPEED)
-        self.rect.center = self.pos
 
 
 class CommonEnemy(CommonSprite):
