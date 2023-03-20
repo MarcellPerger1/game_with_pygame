@@ -10,7 +10,8 @@ import pygame
 from containers import HasRect
 from perf import PerfMgr
 from pg_util import render_text, nearest_of_group
-from sprite_bases import DrawableSprite, CommonSprite
+from sprite_bases import CommonSprite
+from text_sprite import TextSprite
 from trigger_once import trigger_once
 from uses_game import UsesGame
 
@@ -571,34 +572,6 @@ class EnemyWithHealth(CommonEnemy):
     def update(self, *args: Any, **kwargs: Any) -> None:
         super().update(*args, **kwargs)
         self.handle_movement()
-
-
-class TextSprite(DrawableSprite):
-    pos: Vec2 = None
-    text: str = None
-    always_render = False
-
-    def __init__(self, game: HasGame | None, text: str, pos: Vec2 = None):
-        super().__init__(game)
-        self.pos = pos or self.pos
-        self.set_text(text)
-
-    def set_text(self, text: str):
-        if text != self.text or self.surf is None or self.always_render:
-            self.text = text
-            self.set_surf(self.render_text())
-        if self.surf is None:
-            raise RuntimeError("surface was not been returned from"
-                               " render_text or wasn't set by set_surf")
-        self.rect = self.get_rect()
-        if self.rect is None:
-            raise RuntimeError("rect was not returned from get_rect")
-
-    def render_text(self) -> pg.Surface:
-        raise NotImplementedError("You should override render_text when using TextSprite")
-
-    def get_rect(self) -> pg.Rect:
-        raise NotImplementedError("You should override get_rect when using TextSprite")
 
 
 class GameOver(TextSprite):
