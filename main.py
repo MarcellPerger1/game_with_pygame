@@ -271,7 +271,7 @@ class EnemySpawnMgr(UsesGame):
         at = Vec2()
         at.from_polar((distance, angle))
         at += Vec2(self.player.pos)
-        Enemy(self, at)
+        EnemyWithHealth(self, at, 1)
 
 
 class Fonts:
@@ -348,7 +348,7 @@ class Game:
         print('[INFO] Initializing objects')
         self.player = Player(self, Vec2(700, 400))
         TurretItem(self, Vec2(400, 600))
-        self.initial_enemy = Enemy(self, Vec2(50, 655), immobile=True)
+        self.initial_enemy = EnemyWithHealth(self, Vec2(50, 655), 1, immobile=True)
         self.turrets_text = TurretsText(self)
         self.fps_text = FpsText(self, "FPS: N/A")
 
@@ -707,23 +707,6 @@ class CommonEnemy(CommonSprite):
         """This update function handles killing player on contact"""
         if pg.sprite.collide_rect(self, self.player):
             self.on_collide_player()
-
-
-class Enemy(CommonEnemy):
-    size = Vec2(30, 30)
-
-    def __init__(self, game: HasGame, pos: Vec2, immobile=False):
-        super().__init__(game, pos)
-        self.immobile = immobile
-
-    def draw_sprite(self):
-        pg.draw.rect(self.surf, 'red', self.surf.get_rect())
-
-    def update(self, *args: Any, **kwargs: Any) -> None:
-        super().update(*args, **kwargs)
-        if not self.immobile:
-            self.pos = self.pos.move_towards(self.player.pos, ENEMY_SPEED)
-            self.rect.center = self.pos
 
 
 class EnemyWithHealth(CommonEnemy):
