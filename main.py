@@ -729,10 +729,43 @@ class Enemy(CommonEnemy):
 class EnemyWithHealth(CommonEnemy):
     size = Vec2(30, 30)
 
-    def __init__(self, game: HasGame, pos: Vec2, health: float, immobile=False):
+    def __init__(self, game: HasGame, pos: Vec2, health: float,
+                 speed: float = ENEMY_SPEED, immobile=False):
         super().__init__(game, pos)
         self.health = health
         self.immobile = immobile
+        self.speed = speed
+
+    def on_hit_by_bullet(self, bullet: Bullet):
+        self.health -= 1
+        self.check_dead(bullet)
+
+    def check_dead(self, damage_source: Bullet | Any):
+        if self.health > 0:
+            return
+        if self.is_damage_by_player(damage_source):
+            self.kill_by_player(damage_source)
+        else:
+            self.kill()
+
+    def kill_by_player(self, bullet: Bullet):
+        self.game.on_kill_enemy(self, bullet)
+        self.kill()
+
+    @classmethod
+    def is_damage_by_player(cls, damage: Bullet | Any):
+        if isinstance(damage, Bullet):
+            return True
+        return False
+
+    def handle_movement(self):
+        if self.immobile:
+            return
+        self.pos = self.pos.move_towards(self.player.pos, self.speed)
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        super().update(*args, **kwargs)
+        self.handle_movement()
 
 
 class TextSprite(DrawableSprite):
