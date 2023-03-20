@@ -85,9 +85,12 @@ class DrawableSprite(GroupMemberSprite):
                  in_root: bool = None, in_display: bool = None):
         super().__init__(game, *groups, in_root=in_root, in_display=in_display)
         if surf is not None:
-            self.surf = surf
+            self.set_surf(surf)
         if rect is not None:
             self.rect = rect
+
+    def set_surf(self, surf: pg.Surface):
+        self.surf = self.image = surf
 
 
 class SizedSprite(DrawableSprite):
@@ -728,15 +731,39 @@ class EnemyWithHealth(CommonEnemy):
         self.immobile = immobile
 
 
-class GameOver(GamePgSprite):
+class TextSprite(DrawableSprite):
+    pos: Vec2 = None
+    text: str
+
+    def __init__(self, game: HasGame, text: str, pos: Vec2 = None):
+        super().__init__(game)
+        self.pos = pos or self.pos
+        self.set_text(text)
+
+    def set_text(self, text: str):
+        self.text = text
+        self.set_surf(self.render_text())
+        self.rect = self.get_rect()
+
+    def render_text(self) -> pg.Surface:
+        ...
+
+    def get_rect(self) -> pg.Rect:
+        ...
+
+
+class GameOver(TextSprite):
     def __init__(self, game: HasGame, text: str):
         self.set_game(game)
-        super().__init__(None, self.root_group, self.display_group)
-        self.text = text
         self.pos = self.screen.get_rect().center
-        self.surf = self.image = render_text(
+        super().__init__(game, text)
+
+    def render_text(self) -> pg.Surface:
+        return render_text(
             self.fonts.huge, self.text, color='black', justify='center')
-        self.rect = self.surf.get_rect(center=self.pos)
+
+    def get_rect(self) -> pg.Rect:
+        return self.surf.get_rect(center=self.pos)
 
 
 class TurretsText(GamePgSprite):
