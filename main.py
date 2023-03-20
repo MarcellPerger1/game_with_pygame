@@ -584,16 +584,21 @@ class TextSprite(DrawableSprite):
         self.set_text(text)
 
     def set_text(self, text: str):
-        if text != self.text or self.always_render:
+        if text != self.text or self.surf is None or self.always_render:
             self.text = text
             self.set_surf(self.render_text())
+        if self.surf is None:
+            raise RuntimeError("surface was not been returned from"
+                               " render_text or wasn't set by set_surf")
         self.rect = self.get_rect()
+        if self.rect is None:
+            raise RuntimeError("rect was not returned from get_rect")
 
     def render_text(self) -> pg.Surface:
-        ...
+        raise NotImplementedError("You should override render_text when using TextSprite")
 
     def get_rect(self) -> pg.Rect:
-        ...
+        raise NotImplementedError("You should override get_rect when using TextSprite")
 
 
 class GameOver(TextSprite):
