@@ -736,6 +736,9 @@ class EnemyWithHealth(CommonEnemy):
         self.immobile = immobile
         self.speed = speed
 
+    def draw_sprite(self):
+        pg.draw.rect(self.surf, 'red', self.surf.get_rect())
+
     def on_hit_by_bullet(self, bullet: Bullet):
         self.health -= 1
         self.check_dead(bullet)
