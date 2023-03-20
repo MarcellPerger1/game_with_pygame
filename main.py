@@ -20,7 +20,7 @@ Vec2 = pg.math.Vector2
 
 
 USE_FLIP = True
-SHOW_BULLETS = False  # todo test the effect of this on performance
+SHOW_BULLETS = True  # todo test the effect of this on performance
 SHOW_TURRET_RANGE = True
 ALLOW_CHEATS = True
 
