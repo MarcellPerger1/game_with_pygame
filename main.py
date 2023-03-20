@@ -519,7 +519,7 @@ class Player(CommonSprite):
                 self.turrets -= 1
                 self.game.turrets_text.update()
 
-    def on_kill_enemy(self, _enemy: Enemy, _bullet: Bullet):
+    def on_kill_enemy(self, _enemy: CommonEnemy, _bullet: Bullet):
         self.enemies_killed += 1
         self.turret_parts += 0.2
         if self.turret_parts >= 1.0:
@@ -575,12 +575,12 @@ class Turret(CommonSprite):
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         if self.can_shoot():
-            target: Enemy = nearest_of_group(self.pos, self.game.enemies)
+            target: CommonEnemy = nearest_of_group(self.pos, self.game.enemies)
             if target is not None and self.can_shoot_enemy(target):
                 Bullet(self, self.pos, target.pos)
                 self.shot_on_tick = self.curr_tick
 
-    def can_shoot_enemy(self, enemy: Enemy):
+    def can_shoot_enemy(self, enemy: CommonEnemy):
         return self.pos.distance_squared_to(enemy.pos) <= TURRET_RANGE * TURRET_RANGE
 
 
