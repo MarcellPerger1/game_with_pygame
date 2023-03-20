@@ -744,7 +744,7 @@ class EnemyWithHealth(CommonEnemy):
         self.check_dead(bullet)
 
     def check_dead(self, damage_source: Bullet | Any):
-        if self.health > 0:
+        if round(self.health, 9) > 0:
             return
         if self.is_damage_by_player(damage_source):
             self.kill_by_player(damage_source)
