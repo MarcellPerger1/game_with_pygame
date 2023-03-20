@@ -22,6 +22,7 @@ Vec2 = pg.math.Vector2
 USE_FLIP = True
 SHOW_BULLETS = False  # todo test the effect of this on performance
 SHOW_TURRET_RANGE = True
+ALLOW_CHEATS = True
 
 FPS = 60
 SPEED = 3.8
@@ -447,6 +448,9 @@ class Game:
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
                 self.perf_mgr.take_cpu_profile()
+            if event.type == pg.KEYDOWN and event.key == pg.K_t and ALLOW_CHEATS:
+                self.player.turrets += 20
+                self.turrets_text.update()
 
     @property
     def ticks(self):
