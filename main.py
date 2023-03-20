@@ -5,7 +5,7 @@ import random
 import time
 from typing import Any, Literal, overload, Union
 
-import pygame
+import pygame as pg
 
 from containers import HasRect
 from perf import PerfMgr
@@ -15,7 +15,6 @@ from text_sprite import TextSprite
 from trigger_once import trigger_once
 from uses_game import UsesGame
 
-pg = pygame
 Vec2 = pg.math.Vector2
 
 
@@ -95,13 +94,13 @@ class EnemySpawnMgr(UsesGame):
 
 
 class Fonts:
-    huge: pygame.font.Font
-    monospace: pygame.font.Font
+    huge: pg.font.Font
+    monospace: pg.font.Font
 
     @classmethod
     def init(cls):
-        cls.huge = pygame.font.SysFont('Helvetica', 200, bold=True)
-        cls.monospace = pygame.font.SysFont('monospace', 18)
+        cls.huge = pg.font.SysFont('Helvetica', 200, bold=True)
+        cls.monospace = pg.font.SysFont('monospace', 18)
 
 
 class Game:
@@ -127,7 +126,7 @@ class Game:
     # noinspection PyMethodMayBeStatic
     def _init_pygame(self):
         print('[INFO] Initializing modules')
-        n_pass, n_fail = pygame.init()
+        n_pass, n_fail = pg.init()
         print(f'[INFO] Initialized modules: {n_pass} successes, {n_fail} fails')
 
     def _init_fonts(self):
@@ -155,7 +154,7 @@ class Game:
 
     def _init_window(self):
         print('[INFO] Initializing window')
-        self.screen = pygame.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
+        self.screen = pg.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
         self.dirty_this_frame: list[pg.Rect] = []
         self._clear_window()
 
@@ -192,7 +191,7 @@ class Game:
 
     def close_window(self):
         self.pre_quit()
-        pygame.quit()
+        pg.quit()
         self.post_quit()
 
     def pre_quit(self):
@@ -262,8 +261,8 @@ class Game:
         self.player.on_kill_enemy(enemy, bullet)
 
     def handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
                 self.perf_mgr.take_snapshot()
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
