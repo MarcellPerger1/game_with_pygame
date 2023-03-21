@@ -167,6 +167,7 @@ class Game:
         self.initial_enemy = EnemyWithHealth(self, Vec2(50, 655), 1, immobile=True)
         self.turrets_text = TurretsText(self)
         self.fps_text = FpsText(self, "FPS: N/A")
+        self.enemy_info_text = EnemyInfoText(self)
 
     def _init_components(self):
         print('[INFO] Initializing components')
@@ -376,7 +377,7 @@ class TurretsText(TextSprite):
 
     def render_text(self) -> pg.Surface:
         return self.fonts.monospace.render(
-            self.text, True, pg.color.Color('black'))
+            self.text, True, 'black')
 
     def get_rect(self) -> pg.Rect:
         return self.surf.get_rect(topleft=self.pos)
@@ -386,6 +387,25 @@ class TurretsText(TextSprite):
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         self.set_text(f'Turrets: {self.player.turrets}')
+
+
+class EnemyInfoText(TextSprite):
+    def __init__(self, game: HasGame):
+        self.set_game(game)
+        extra_y = self.fonts.monospace.get_height() * 2
+        super().__init__(None, "(Loading enemy info...)", Vec2(5, 5) + Vec2(0, extra_y))
+
+    def render_text(self) -> pg.Surface:
+        return render_text(self.fonts.monospace, self.text, True, 'black')
+
+    def get_rect(self) -> pg.Rect:
+        return self.surf.get_rect(topleft=self.pos)
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        spawn_interval = self.game.enemy_spawner.enemy_spawn_interval
+        self.set_text(f'Enemies killed: {self.player.enemies_killed}\n'
+                      f'Enemies currently alive: {len(self.game.enemies)}\n'
+                      f'Enemy spawn interval: {spawn_interval:.3f}')
 
 
 class FpsText(TextSprite):
@@ -402,8 +422,8 @@ class FpsText(TextSprite):
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         if self.curr_tick % 5 == 1:
-            self.set_text(f'FPS: {self.game.clock.get_fps():.2f}\n'
-                          f'ms/frame: {self.game.frame_time*1000:.2f}')
+            self.set_text(f'FPS: {self.game.clock.get_fps():>5.2f}\n'
+                          f'ms/frame: {self.game.frame_time*1000:>5.2f}')
 
 
 class Tutorial(UsesGame):
