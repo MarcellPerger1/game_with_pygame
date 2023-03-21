@@ -251,6 +251,10 @@ class Game:
     def on_post_tick(self):
         self.enemy_spawner.handle_enemy_spawns()
 
+    def on_player_die(self):
+        GameOver(self, f'Game Over\nScore: {self.player.enemies_killed}')
+        print('You died')
+
     # todo observer pattern for on_* methods
     def on_kill_enemy(self, enemy, bullet):
         self.enemy_spawner.increment_interval_once()
@@ -342,6 +346,10 @@ class Player(CommonSprite):
             self.turrets += round(extra_turrets)  # not int() coz fp precision
             self.game.turrets_text.update()
 
+    def die(self):
+        self.is_dead = True
+        self.game.on_player_die()
+
 
 class Collectable(CommonSprite):
     size = Vec2(12, 12)  # 'standard' size for a collectable; override this
@@ -381,9 +389,7 @@ class CommonEnemy(CommonSprite):
         self.game.on_kill_enemy(self, bullet)
 
     def on_collide_player(self):
-        self.player.is_dead = True
-        GameOver(self, f'Game Over\nScore: {self.player.enemies_killed}')
-        print('You died')
+        self.player.die()
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         """This update function handles killing player on contact"""
