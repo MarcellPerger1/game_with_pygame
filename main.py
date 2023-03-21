@@ -6,6 +6,7 @@ import time
 from typing import Any, overload, Union
 
 import pygame as pg
+from pygame import Vector2 as Vec2
 
 from bullet import Bullet
 from containers import HasRect
@@ -16,8 +17,6 @@ from text_sprite import TextSprite
 from trigger_once import trigger_once
 from turret import Turret, TurretRangeIndicator
 from uses_game import UsesGame
-
-Vec2 = pg.math.Vector2
 
 
 USE_FLIP = True
