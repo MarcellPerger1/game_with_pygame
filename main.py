@@ -440,6 +440,8 @@ class TurretRangeIndicator(CommonSprite):
     def request_redraw(cls, *args: TurretRangeIndicator):
         if cls.need_redraw == 'all':
             return
+        if 'all' in args:
+            cls.need_redraw = 'all'
         cls.need_redraw += args
 
     @classmethod
