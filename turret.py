@@ -10,8 +10,8 @@ from pg_util import nearest_of_group
 from sprite_bases import CommonSprite
 
 if TYPE_CHECKING:
-    from main import HasGame, CommonEnemy, Game
-
+    from main import HasGame, Game
+    from enemy import CommonEnemy
 
 SHOW_TURRET_RANGE = True
 TURRET_INTERVAL = 45

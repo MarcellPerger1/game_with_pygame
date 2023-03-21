@@ -8,7 +8,8 @@ from pygame.math import Vector2 as Vec2
 from sprite_bases import CommonSprite
 
 if TYPE_CHECKING:
-    from main import HasGame, CommonEnemy
+    from main import HasGame
+    from enemy import CommonEnemy
 
 SHOW_BULLETS = True  # todo test the effect of this on performance
 BULLET_SPEED = 25
