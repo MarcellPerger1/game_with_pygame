@@ -418,15 +418,16 @@ class FpsText(TextSprite):
         super().__init__(None, text, Vec2(self.screen.get_width() - 5, 5))
 
     def render_text(self) -> pg.Surface:
-        return self.fonts.monospace.render(
-            self.text, True, pg.color.Color('black'))
+        return render_text(self.fonts.monospace, self.text, True,
+                           pg.color.Color('black'), justify='right')
 
     def get_rect(self) -> pg.Rect:
         return self.surf.get_rect(topright=self.pos)
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         if self.curr_tick % 5 == 1:
-            self.set_text(f'FPS: {self.game.clock.get_fps():.2f}')
+            self.set_text(f'FPS: {self.game.clock.get_fps():.2f}\n'
+                          f'ms/frame: {self.game.frame_time*1000:.2f}')
 
 
 class Tutorial(UsesGame):
