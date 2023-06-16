@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from enemy import CommonEnemy
 
 SHOW_TURRET_RANGE = True
+INSTANT_SHOOT = False
 TURRET_INTERVAL = 45
 TURRET_RANGE = 140
 
@@ -42,8 +43,15 @@ class Turret(CommonSprite):
         if self.can_shoot():
             target: CommonEnemy = nearest_of_group(self.pos, self.game.enemies)
             if target is not None and self.can_shoot_enemy(target):
-                Bullet(self, self.pos, target.pos)
-                self.shot_on_tick = self.curr_tick
+                self.shoot_enemy(target)
+
+    def shoot_enemy(self, enemy: CommonEnemy,
+                    update_shot_time=True, instant=INSTANT_SHOOT):
+        bullet = Bullet(self, enemy.pos, enemy.pos)
+        if instant:
+            bullet.on_hit_enemy(enemy)
+        if update_shot_time:
+            self.shot_on_tick = self.curr_tick
 
     def can_shoot_enemy(self, enemy: CommonEnemy):
         return self.pos.distance_squared_to(enemy.pos) <= TURRET_RANGE * TURRET_RANGE
