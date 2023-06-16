@@ -245,9 +245,11 @@ class Game:
     def frame_inner_with_prof(self, p: cProfile.Profile | None):
         if not p:
             return self.do_frame_inner()
+        self.log.info("Recording CPU profile")
         with p:
             self.do_frame_inner()
         p.dump_stats('game_perf.prof')
+        self.log.info("CPU profile dumped to game_perf.prof")
 
     def do_frame_inner(self):
         self.do_tick()
