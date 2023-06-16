@@ -80,7 +80,7 @@ class SizedSprite(DrawableSprite):
             raise self._err_missing_size("__init__")
 
     @classmethod
-    def _err_missing_size(cls, method_name: str) -> NoReturn:
+    def _err_missing_size(cls, method_name: str) -> TypeError:
         return TypeError(f"size must be passed to {method_name}"
                          " or set as a class attribute")
 
