@@ -312,10 +312,20 @@ class Player(CommonSprite):
 
     def __init__(self, game: HasGame, pos: Vec2):
         super().__init__(game, pos)
-        self.turrets = 0
+        self._turrets = 0.0
         self.is_dead = False
         self.enemies_killed = 0
-        self.turret_parts = 0.0
+
+    @property
+    def turrets(self):
+        return self._turrets
+
+    @turrets.setter
+    def turrets(self, value: float):
+        # rounding because of fp precision, 0.1 + 0.2 != 0.3
+        # (don't want to end up with 0.999999...4 turrets)
+        self._turrets = round(value, 8)
+        self.game.turrets_text.update()
 
     def draw_sprite(self):
         pg.draw.circle(self.surf, 'blue', self.size / 2, P_RADIUS)
@@ -342,7 +352,7 @@ class Player(CommonSprite):
             self.while_left_click()
 
     def while_left_click(self):
-        if self.turrets > 0:
+        if self.turrets >= 1.0:
             mouse_pos = Vec2(pg.mouse.get_pos())
             if not pg.sprite.spritecollide(
                     HasRect(Turret.get_virtual_rect(mouse_pos)),
@@ -353,11 +363,7 @@ class Player(CommonSprite):
 
     def on_kill_enemy(self, _enemy: CommonEnemy, _bullet: Bullet):
         self.enemies_killed += 1
-        self.turret_parts += 0.2
-        if self.turret_parts >= 1.0:
-            extra_turrets, self.turret_parts = divmod(self.turret_parts, 1)
-            self.turrets += round(extra_turrets)  # not int() coz fp precision
-            self.game.turrets_text.update()
+        self.turrets += 0.2
 
     def die(self):
         self.is_dead = True
