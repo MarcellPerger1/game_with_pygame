@@ -97,7 +97,8 @@ class TurretRangeIndicator(CommonSprite):
             return
         if 'all' in args:
             cls.need_redraw = 'all'
-        cls.need_redraw += args
+        else:
+            cls.need_redraw += args
 
     @classmethod
     def make_overlay_surf(cls, game: Game, remake_force=False):
