@@ -40,8 +40,8 @@ class PGExit(BaseException):
 
 
 class EnemySpawnMgr(UsesGame):
-    def __init__(self, game_: HasGame):
-        super().__init__(game_)
+    def __init__(self, game: HasGame):
+        super().__init__(game)
         self.is_enabled = False
         self.next_enemy_time: int | None = None
         self.enemy_spawn_interval: float = SPAWN_INTERVAL_START
@@ -322,8 +322,8 @@ HasGame = Union[UsesGame, Game]
 
 
 class EveryNTicks(UsesGame):
-    def __init__(self, game_: HasGame, n: int, offset=1):
-        super().__init__(game_)
+    def __init__(self, game: HasGame, n: int, offset=1):
+        super().__init__(game)
         self.n = n
         self.started_at = self.curr_tick + offset
 
