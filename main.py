@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import cProfile
+import logging as lg
 import random
+import sys
 import time
-from typing import Any, overload, Union
+from typing import Any, overload, Union, TextIO
 
 import pygame as pg
 from pygame import Vector2 as Vec2
@@ -100,6 +102,17 @@ class Fonts:
         cls.monospace = pg.font.SysFont('monospace', 18)
 
 
+class GameLogger(lg.Logger):
+    def __init__(self, stream: TextIO = None):
+        super().__init__("game_with_pygame", lg.INFO)
+        if stream is None:
+            stream = sys.stderr
+        self._stream_handler = lg.StreamHandler(stream)
+        self._formatter = lg.Formatter('[{levelname}] {message}', style='{')
+        self._stream_handler.setFormatter(self._formatter)
+        self.addHandler(self._stream_handler)
+
+
 class Game:
     curr_tick: int
     frame_start: float
@@ -112,6 +125,7 @@ class Game:
             self.init()
 
     def init(self):
+        self._init_logger()
         self._init_pygame()
         self._init_timing()
         self._init_fonts()
@@ -120,27 +134,33 @@ class Game:
         self._init_components()
         self._init_objects()
 
+    def _init_logger(self):
+        # this way of initializing is not recommended but I'm doing it anyway
+        # as it's the cleanest way (when using a separate class)
+        self.log = GameLogger()
+        self.log.info("Logger initialized")
+
     # noinspection PyMethodMayBeStatic
     def _init_pygame(self):
-        print('[INFO] Initializing modules')
+        self.log.info('Initializing modules')
         n_pass, n_fail = pg.init()
-        print(f'[INFO] Initialized modules: {n_pass} successes, {n_fail} fails')
+        self.log.info(f'Initialized modules: {n_pass} successes, {n_fail} fails')
 
     def _init_fonts(self):
-        print('[INFO] Initializing fonts')
+        self.log.info('Initializing fonts')
         t0 = time.perf_counter()
         self.fonts = Fonts()
         self.fonts.init()
         t1 = time.perf_counter()
-        print(f'[INFO] Initialized fonts in {t1 - t0:.2f}s')
+        self.log.info(f'Initialized fonts in {t1 - t0:.2f}s')
 
     def _init_timing(self):
-        print('[INFO] Initializing clock')
+        self.log.info('Initializing clock')
         self.curr_tick = 0
         self.clock = pg.time.Clock()
 
     def _init_groups(self):
-        print('[INFO] Initializing groups')
+        self.log.info('Initializing groups')
         self.root_group = pg.sprite.Group()
         # todo should use LayeredUpdates / LayeredDirty
         self.display_group = pg.sprite.RenderUpdates()
@@ -150,18 +170,18 @@ class Game:
         self.turrets = pg.sprite.Group()
 
     def _init_window(self):
-        print('[INFO] Initializing window')
+        self.log.info('Initializing window')
         self.screen = pg.display.set_mode((1600, 900), pg.RESIZABLE, display=0)
         self.dirty_this_frame: list[pg.Rect] = []
         self._clear_window()
 
     def _clear_window(self):
-        print('[INFO] Clearing window')
+        self.log.info('Clearing window')
         self.screen.fill((255, 255, 255))
         pg.display.flip()
 
     def _init_objects(self):
-        print('[INFO] Initializing objects')
+        self.log.info('Initializing objects')
         self.player = Player(self, Vec2(700, 400))
         TurretItem(self, Vec2(400, 600))
         self.initial_enemy = EnemyWithHealth(self, Vec2(50, 655), 1, immobile=True)
@@ -170,7 +190,7 @@ class Game:
         self.enemy_info_text = EnemyInfoText(self)
 
     def _init_components(self):
-        print('[INFO] Initializing components')
+        self.log.info('Initializing components')
         self.enemy_spawner = EnemySpawnMgr(self)
         self.perf_mgr = PerfMgr()
         self.tutorial = Tutorial(self)
@@ -215,8 +235,8 @@ class Game:
         self.frame_end = time.perf_counter()
         self.frame_time = self.frame_end - self.frame_start
         if self.curr_tick % 10 == 1:
-            print(f'Update took: {self.frame_time * 1000:.2f}ms')
-            print(f'FPS: {self.clock.get_fps():.2f}')
+            self.log.debug(f'Update took: {self.frame_time * 1000:.2f}ms')
+            self.log.debug(f'FPS: {self.clock.get_fps():.2f}')
 
     def wait_for_next_frame(self):
         self.clock.tick(FPS)
@@ -255,7 +275,7 @@ class Game:
 
     def on_player_die(self):
         GameOver(self, f'Game Over\nScore: {self.player.enemies_killed}')
-        print('You died')
+        self.log.info("Game over")
 
     # todo observer pattern for on_* methods
     def on_kill_enemy(self, enemy, bullet):
@@ -276,8 +296,11 @@ class Game:
                 self.on_resize(event)
 
     def on_resize(self, event):
+        t0 = time.perf_counter()
         self.update_ui_position(event.size)
         TurretRangeIndicator.make_overlay_surf(self, force_remake=True)
+        t1 = time.perf_counter()
+        self.log.info(f"Resized window to {event.w}x{event.h} in {t1 - t0:.3f}s")
 
     def update_ui_position(self, _new_size: Vec2):
         for s in self.display_group:
