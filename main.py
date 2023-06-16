@@ -273,7 +273,11 @@ class Game:
                 self.player.turrets += 20
                 self.turrets_text.update()
             if event.type == pg.VIDEORESIZE:
-                self.update_ui_position(event.size)
+                self.on_resize(event)
+
+    def on_resize(self, event):
+        self.update_ui_position(event.size)
+        TurretRangeIndicator.make_overlay_surf(self, force_remake=True)
 
     def update_ui_position(self, _new_size: Vec2):
         for s in self.display_group:

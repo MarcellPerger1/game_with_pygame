@@ -91,8 +91,10 @@ class TurretRangeIndicator(CommonSprite):
         self.game.dirty_this_frame.append(self.rect)
         self.request_redraw(self)
 
+    # todo remove `| str` when pycharm fixes the bug
+    #  that 'all' is not a Literal['all'] when used in args
     @classmethod
-    def request_redraw(cls, *args: TurretRangeIndicator):
+    def request_redraw(cls, *args: TurretRangeIndicator | Literal['all'] | str):
         if cls.need_redraw == 'all':
             return
         if 'all' in args:
@@ -101,9 +103,10 @@ class TurretRangeIndicator(CommonSprite):
             cls.need_redraw += args
 
     @classmethod
-    def make_overlay_surf(cls, game: Game, remake_force=False):
-        if cls.overlays_surf is None or remake_force:
+    def make_overlay_surf(cls, game: Game, force_remake=False):
+        if cls.overlays_surf is None or force_remake:
             cls.overlays_surf = pg.Surface(game.screen.get_size(), pg.SRCALPHA)
+            cls.request_redraw('all')
 
     @classmethod
     def draw_all(cls, game: Game):
