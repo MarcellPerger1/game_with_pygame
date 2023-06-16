@@ -14,12 +14,12 @@ from containers import HasRect
 from enemy import CommonEnemy, EnemyWithHealth
 from perf import PerfMgr
 from pg_util import render_text
-from sprite_bases import CommonSprite
+from sprite_bases import CommonSprite, RectUpdatingSprite
 from text_sprite import TextSprite
 from trigger_once import trigger_once
 from turret import Turret, TurretRangeIndicator
 from uses_game import UsesGame
-
+from util import option
 
 USE_FLIP = True
 ALLOW_CHEATS = True
@@ -272,6 +272,13 @@ class Game:
             if event.type == pg.KEYDOWN and event.key == pg.K_t and ALLOW_CHEATS:
                 self.player.turrets += 20
                 self.turrets_text.update()
+            if event.type == pg.VIDEORESIZE:
+                self.update_ui_position(event.size)
+
+    def update_ui_position(self, _new_size: Vec2):
+        for s in self.display_group:
+            if isinstance(s, RectUpdatingSprite):
+                s.update_rect()
 
     @property
     def ticks(self):
@@ -355,31 +362,27 @@ class Player(CommonSprite):
 
 class GameOver(TextSprite):
     def __init__(self, game: HasGame, text: str):
-        self.set_game(game)
-        self.pos = self.screen.get_rect().center
         super().__init__(game, text)
 
     def render_text(self) -> pg.Surface:
-        return render_text(
-            self.fonts.huge, self.text, color='black', justify='center')
+        return render_text(self.fonts.huge, self.text, color='black', justify='center')
 
     def get_rect(self) -> pg.Rect:
+        self.pos = self.screen.get_rect().center
         return self.surf.get_rect(center=self.pos)
 
 
 class TurretsText(TextSprite):
     def __init__(self, game: HasGame, text: str = None):
-        self.set_game(game)
-        if text is None:
-            text = 'Turrets: 0'
-        super().__init__(None, text, Vec2(5, 5))
+        text = option(text, 'Turrets: 0')
+        super().__init__(game, text)
         self.set_text(text)
 
     def render_text(self) -> pg.Surface:
-        return self.fonts.monospace.render(
-            self.text, True, 'black')
+        return self.fonts.monospace.render(self.text, True, 'black')
 
     def get_rect(self) -> pg.Rect:
+        self.pos = Vec2(5, 5)
         return self.surf.get_rect(topleft=self.pos)
 
     @overload
@@ -391,14 +394,14 @@ class TurretsText(TextSprite):
 
 class EnemyInfoText(TextSprite):
     def __init__(self, game: HasGame):
-        self.set_game(game)
-        extra_y = self.fonts.monospace.get_height() * 2
-        super().__init__(None, "(Loading enemy info...)", Vec2(5, 5) + Vec2(0, extra_y))
+        super().__init__(game, "(Loading enemy info...)", )
 
     def render_text(self) -> pg.Surface:
         return render_text(self.fonts.monospace, self.text, True, 'black')
 
     def get_rect(self) -> pg.Rect:
+        extra_y = self.fonts.monospace.get_height() * 2
+        self.pos = Vec2(5, 5) + Vec2(0, extra_y)
         return self.surf.get_rect(topleft=self.pos)
 
     def update(self, *args: Any, **kwargs: Any) -> None:
@@ -410,14 +413,14 @@ class EnemyInfoText(TextSprite):
 
 class FpsText(TextSprite):
     def __init__(self, game: HasGame, text: str):
-        self.set_game(game)
-        super().__init__(None, text, Vec2(self.screen.get_width() - 5, 5))
+        super().__init__(game, text)
 
     def render_text(self) -> pg.Surface:
         return render_text(self.fonts.monospace, self.text, True,
                            pg.color.Color('black'), justify='right')
 
     def get_rect(self) -> pg.Rect:
+        self.pos = Vec2(self.screen.get_width() - 5, 5)
         return self.surf.get_rect(topright=self.pos)
 
     def update(self, *args: Any, **kwargs: Any) -> None:

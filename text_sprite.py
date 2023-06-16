@@ -42,4 +42,5 @@ class TextSprite(RectUpdatingSprite):
         raise NotImplementedError("You should override render_text when using TextSprite")
 
     def get_rect(self) -> pg.Rect:
+        """This should recalculate not just the rect but also the pos"""
         raise NotImplementedError("You should override get_rect when using TextSprite")
