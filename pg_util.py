@@ -1,11 +1,21 @@
+"""All utils that require pygame"""
+
 from __future__ import annotations
 
 from math import inf
+from typing import Sequence
 
 import pygame as pg
 from pygame import Vector2 as Vec2
 
 from pygame_patches import leaks
+
+
+def vec2_from_polar(polar: tuple[float, float] | Sequence[float]):
+    """vec2_from_polar((r, angle)) -> Vec2"""
+    v = Vec2()
+    v.from_polar(polar)
+    return v
 
 
 def rect_from_size(sz: Vec2, **kwargs):
