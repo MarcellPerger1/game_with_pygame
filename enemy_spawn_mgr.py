@@ -57,7 +57,7 @@ class EnemySpawnMgr2(UsesGame):
     def on_kill_enemy(self, enemy: EnemyWithHealth):
         if not self.enabled:
             return
-        self.strength += enemy.health * 0.005
+        self.strength += enemy.max_hp * 0.002
 
     def spawn_enemy(self):
         angle = random.uniform(0, 360)
