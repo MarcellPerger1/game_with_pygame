@@ -18,6 +18,57 @@ MAX_ENEMIES_PER_TICK = 18
 MIN_SPAWN_INTERVAL = 0.01
 
 
+class EnemySpawnMgr2(UsesGame):
+    next_enemy_health: int
+
+    def __init__(self, game: HasGame, strength=0.01, enabled=False, start_points=0.0):
+        super().__init__(game)
+        self.points = start_points
+        self.strength = strength
+        self.enabled = enabled
+        self.enable_after: int | None = None
+        self.decide_next_enemy()
+
+    def enable(self, delay: int = 0):
+        self.enable_after: int | None = self.curr_tick + delay
+        self.check_if_should_enable()
+
+    def check_if_should_enable(self):
+        if self.curr_tick >= self.enable_after:
+            self.enabled = True
+
+    def decide_next_enemy(self):
+        desired_wait_time = 60  # ticks
+        health_after_wait_time = desired_wait_time * self.strength
+        if health_after_wait_time <= 1.0:
+            health_after_wait_time = 1.0
+        health = random.triangular(1, health_after_wait_time * 2)
+        self.next_enemy_health = round(health)
+
+    def on_tick(self):
+        self.check_if_should_enable()
+        if not self.enabled:
+            return
+        self.points += self.strength
+        self.strength += 0.0005 / 60
+
+    def on_kill_enemy(self, enemy: EnemyWithHealth):
+        if not self.enabled:
+            return
+        self.strength += enemy.health * 0.005
+
+    def spawn_enemy(self):
+        angle = random.uniform(0, 360)
+        distance = random.uniform(250, 500)
+        at = Vec2()
+        at.from_polar((distance, angle))
+        at += Vec2(self.player.pos)
+        health = self.next_enemy_health
+        EnemyWithHealth(self, at, health)
+        self.points -= health
+        self.decide_next_enemy()
+
+
 class EnemySpawnMgr(UsesGame):
     def __init__(self, game: HasGame):
         super().__init__(game)
