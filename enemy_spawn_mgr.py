@@ -66,8 +66,7 @@ class SingleEnemySpawn(EnemySpawnStrategy):
     def spawn(self):
         angle = random.uniform(0, 360)
         distance = random.uniform(250, 500)
-        at = Vec2()
-        at.from_polar((distance, angle))
+        at = vec2_from_polar((distance, angle))
         at += Vec2(self.player.pos)
         return EnemyWithHealth(self, at, self.health)
 
