@@ -15,6 +15,22 @@ if TYPE_CHECKING:
 
 
 class EnemySpawnStrategy(UsesGame, ABC):
+    def __init__(self, spawner: EnemySpawnMgr):
+        """The __init__ of all subclasses should be compatible
+        with this signature i.e. should be able to accept creation
+        like <subclass>(spawner), the other arguments should be optional.
+        This is needed for `make_random` to work.
+        Alternatively, just override `make_random`"""
+        super().__init__(spawner)
+
+    @classmethod
+    def make_random(cls, spawner: EnemySpawnMgr):
+        return cls(spawner).randomize()
+
+    @abstractmethod
+    def randomize(self):
+        """Randomizes this instance **inplace**!, returns self"""
+
     @abstractmethod
     def spawn(self):
         ...
@@ -41,10 +57,6 @@ class SingleEnemySpawn(EnemySpawnStrategy):
                             f"~ uniform(1, {target_health * 2:.2f})")
         self.health = round(health)
         return self
-
-    @classmethod
-    def make_random(cls, spawner: EnemySpawnMgr):
-        return cls(spawner).randomize()
 
     def spawn(self):
         angle = random.uniform(0, 360)
