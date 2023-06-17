@@ -51,10 +51,10 @@ class SingleEnemySpawn(EnemySpawnStrategy):
 
     def randomize(self):
         """Randomizes this instance **inplace**!, returns self"""
-        target_health = math.sqrt(self.spawner.strength * 40)
-        health = random.uniform(1, target_health * 2)
+        mean_health = self.spawner.base_enemy_health
+        health = random.uniform(1, mean_health * 2)
         self.game.log.debug(f"Next SingleEnemySpawn has {health=:.2f} "
-                            f"~ uniform(1, {target_health * 2:.2f})")
+                            f"~ uniform(1, {mean_health * 2:.2f})")
         self.health = round(health)
         return self
 
@@ -107,6 +107,10 @@ class EnemySpawnMgr(UsesGame):
         if not self.enabled:
             return
         self.strength += 0.0006 + enemy.max_hp * 0.0004
+
+    @property
+    def base_enemy_health(self):
+        return math.sqrt(self.strength * 40)
 
     def spawn_all(self):
         while self.points >= self.next_enemy.get_cost():
