@@ -327,11 +327,11 @@ class Player(CommonSprite):
                     self.game.turrets, False):
                 Turret(self, mouse_pos)
                 self.turrets -= 1
-                self.game.turrets_text.update()
 
-    def on_kill_enemy(self, _enemy: CommonEnemy, _bullet: Bullet):
+    def on_kill_enemy(self, enemy: EnemyWithHealth, _bullet: Bullet):
         self.enemies_killed += 1
-        self.turrets += 0.2
+        self.turrets += 0.1 + 0.1 * enemy.max_hp
+        self.score += int(enemy.max_hp)
 
     def die(self):
         self.is_dead = True
