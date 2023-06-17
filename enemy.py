@@ -41,7 +41,7 @@ class EnemyWithHealth(CommonEnemy):
     def __init__(self, game: HasGame, pos: Vec2, health: float,
                  speed: float = ENEMY_SPEED, immobile=False):
         super().__init__(game, pos)
-        self.health = health
+        self.health = self.max_hp = health
         self.immobile = immobile
         self.speed = speed
 
