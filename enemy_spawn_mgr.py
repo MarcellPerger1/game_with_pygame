@@ -141,7 +141,11 @@ class EnemySpawnMgr(UsesGame):
             self.enabled = True
 
     def decide_next_enemy(self):
-        self.next_enemy = SingleEnemySpawn.make_random(self)
+        cluster_chance = clamp(self.strength * 0.5, None, 0.35)
+        if self.strength > 0.2 and random.random() < cluster_chance:
+            self.next_enemy = ClusterEnemySpawn.make_random(self)
+        else:
+            self.next_enemy = SingleEnemySpawn.make_random(self)
 
     def on_tick(self):
         self.check_if_should_enable()
