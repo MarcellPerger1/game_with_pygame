@@ -47,7 +47,7 @@ class Turret(CommonSprite):
 
     def shoot_enemy(self, enemy: CommonEnemy,
                     update_shot_time=True, instant=INSTANT_SHOOT):
-        bullet = Bullet(self, enemy.pos, enemy.pos)
+        bullet = Bullet(self, self.pos, enemy.pos)
         if instant:
             bullet.on_hit_enemy(enemy)
         if update_shot_time:
