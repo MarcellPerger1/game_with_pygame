@@ -3,12 +3,15 @@ from __future__ import annotations
 import math
 import random
 from abc import ABC, abstractmethod
+from math import pi
 from typing import TYPE_CHECKING
 
 from pygame import Vector2 as Vec2
 
 from enemy import EnemyWithHealth
+from pg_util import vec2_from_polar
 from uses_game import UsesGame
+from util import uniform_from_mean
 
 if TYPE_CHECKING:
     from main import HasGame
@@ -22,6 +25,7 @@ class EnemySpawnStrategy(UsesGame, ABC):
         This is needed for `make_random` to work.
         Alternatively, just override `make_random`"""
         super().__init__(spawner)
+        self.spawner = spawner
 
     @classmethod
     def make_random(cls, spawner: EnemySpawnMgr):
@@ -32,7 +36,7 @@ class EnemySpawnStrategy(UsesGame, ABC):
         """Randomizes this instance **inplace**!, returns self"""
 
     @abstractmethod
-    def spawn(self):
+    def spawn(self) -> EnemyWithHealth | list[EnemyWithHealth]:
         ...
 
     @abstractmethod
@@ -46,7 +50,6 @@ class EnemySpawnStrategy(UsesGame, ABC):
 class SingleEnemySpawn(EnemySpawnStrategy):
     def __init__(self, spawner: EnemySpawnMgr, health: int = 1):
         super().__init__(spawner)
-        self.spawner = spawner
         self.health = health
 
     def randomize(self):
@@ -71,6 +74,46 @@ class SingleEnemySpawn(EnemySpawnStrategy):
 
     def __str__(self):
         return f'{type(self).__qualname__} with health={self.health}'
+
+
+class ClusterEnemySpawn(EnemySpawnStrategy):
+    def __init__(self, spawner: EnemySpawnMgr):
+        super().__init__(spawner)
+        self.total_health = 0
+        self.enemy_health_list = []
+
+    def randomize(self):
+        total_health = self.spawner.base_enemy_health * 1.6
+        mean_amount = self.spawner.strength * 3.0
+        amount = round(random.uniform(mean_amount * 0.7, mean_amount * 1.3))
+        mean_health = total_health / amount
+        health_min = math.floor(mean_health) - 1
+        health_max = math.ceil(mean_health) + 1
+        self.enemy_health_list = [
+            random.uniform(health_min, health_max) for _ in range(amount)]
+        self.total_health = sum(self.enemy_health_list)
+
+    def spawn(self):
+        mean_distance = random.uniform(250, 500)
+        distance_variation = random.uniform(70, 170)
+        mean_angle = random.uniform(0, 360)
+        angle_length_variation = random.uniform(150, 250)
+        # length / circumference = angle / 360
+        # angle = 360*length / (2*pi*r) = 180*length / (pi*r)
+        angle_variation = 180 * angle_length_variation / (pi * mean_distance)
+        enemies = []
+        for health in self.enemy_health_list:
+            angle = uniform_from_mean(mean_angle, angle_variation)
+            distance = uniform_from_mean(mean_distance, distance_variation)
+            if distance < 250:
+                distance = random.uniform(
+                    250, mean_distance + distance_variation)
+            pos = vec2_from_polar((distance, angle))
+            enemies.append(EnemyWithHealth(self, pos, health))
+        return enemies
+
+    def get_cost(self) -> float:
+        return self.total_health
 
 
 class EnemySpawnMgr(UsesGame):
