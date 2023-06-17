@@ -47,3 +47,12 @@ class TestUsesGame(TestCase):
         ug.game = None
         inst.set_game(ug, False)
         self.assertIsNone(inst.game)
+
+    def test__set_game__from_class(self):
+        g = obj()
+
+        class Sub(UsesGame):
+            game = g
+        inst = Sub.__new__(Sub)
+        inst.set_game(None)
+        self.assertIs(inst.game, g)
