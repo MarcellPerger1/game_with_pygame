@@ -53,7 +53,7 @@ class SingleEnemySpawn(EnemySpawnStrategy):
         """Randomizes this instance **inplace**!, returns self"""
         target_health = math.sqrt(self.spawner.strength * 40)
         health = random.uniform(1, target_health * 2)
-        self.game.log.debug(f"Next enemy has {health=:.2f} "
+        self.game.log.debug(f"Next SingleEnemySpawn has {health=:.2f} "
                             f"~ uniform(1, {target_health * 2:.2f})")
         self.health = round(health)
         return self
