@@ -216,15 +216,15 @@ class Game:
         self.on_post_tick()
 
     def on_post_tick(self):
-        self.enemy_spawner.handle_enemy_spawns()
+        self.enemy_spawner.on_tick()
 
     def on_player_die(self):
-        GameOver(self, f'Game Over\nScore: {self.player.enemies_killed}')
+        GameOver(self, f'Game Over\nScore: {self.player.score}')
         self.log.info("Game over")
 
     # todo observer pattern for on_* methods
     def on_kill_enemy(self, enemy, bullet):
-        self.enemy_spawner.increment_interval_once()
+        self.enemy_spawner.on_kill_enemy(enemy)
         self.player.on_kill_enemy(enemy, bullet)
 
     def handle_events(self):
@@ -283,6 +283,7 @@ class Player(CommonSprite):
         self._turrets = 0.0
         self.is_dead = False
         self.enemies_killed = 0
+        self.score = 0
 
     @property
     def turrets(self):
@@ -327,11 +328,11 @@ class Player(CommonSprite):
                     self.game.turrets, False):
                 Turret(self, mouse_pos)
                 self.turrets -= 1
-                self.game.turrets_text.update()
 
-    def on_kill_enemy(self, _enemy: CommonEnemy, _bullet: Bullet):
+    def on_kill_enemy(self, enemy: EnemyWithHealth, _bullet: Bullet):
         self.enemies_killed += 1
-        self.turrets += 0.2
+        self.turrets += 0.165 + 0.035 * enemy.max_hp
+        self.score += int(enemy.max_hp)
 
     def die(self):
         self.is_dead = True
@@ -383,10 +384,12 @@ class EnemyInfoText(TextSprite):
         return self.surf.get_rect(topleft=self.pos)
 
     def update(self, *args: Any, **kwargs: Any) -> None:
-        spawn_interval = self.game.enemy_spawner.enemy_spawn_interval
-        self.set_text(f'Enemies killed: {self.player.enemies_killed}\n'
+        strength = self.game.enemy_spawner.strength
+        self.set_text(f'Score: {self.player.score}\n'
+                      f'Enemies killed: {self.player.enemies_killed}\n'
                       f'Enemies currently alive: {len(self.game.enemies)}\n'
-                      f'Enemy spawn interval: {spawn_interval:.3f}')
+                      f'Enemy strength: {strength:>6.4f} pt/frame\n'
+                      f'Enemy strength: {strength * 60:>6.3f} pt/sec')
 
 
 class FpsText(TextSprite):
@@ -413,7 +416,7 @@ class Tutorial(UsesGame):
 
     @trigger_once
     def place_turret(self):
-        self.game.enemy_spawner.is_enabled = True
+        self.game.enemy_spawner.enable()
         self.game.initial_enemy.immobile = False
 
 
