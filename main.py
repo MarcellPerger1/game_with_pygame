@@ -219,7 +219,7 @@ class Game:
         self.enemy_spawner.on_tick()
 
     def on_player_die(self):
-        GameOver(self, f'Game Over\nScore: {self.player.enemies_killed}')
+        GameOver(self, f'Game Over\nScore: {self.player.score}')
         self.log.info("Game over")
 
     # todo observer pattern for on_* methods
@@ -283,6 +283,7 @@ class Player(CommonSprite):
         self._turrets = 0.0
         self.is_dead = False
         self.enemies_killed = 0
+        self.score = 0
 
     @property
     def turrets(self):
