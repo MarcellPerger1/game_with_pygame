@@ -384,10 +384,12 @@ class EnemyInfoText(TextSprite):
         return self.surf.get_rect(topleft=self.pos)
 
     def update(self, *args: Any, **kwargs: Any) -> None:
-        spawn_interval = self.game.enemy_spawner.strength
-        self.set_text(f'Enemies killed: {self.player.enemies_killed}\n'
+        strength = self.game.enemy_spawner.strength
+        self.set_text(f'Score: {self.player.score}\n'
+                      f'Enemies killed: {self.player.enemies_killed}\n'
                       f'Enemies currently alive: {len(self.game.enemies)}\n'
-                      f'Enemy strength: {spawn_interval:.3f}')
+                      f'Enemy strength: {strength:>6.4f} pt/frame\n'
+                      f'Enemy strength: {strength * 60:>6.3f} pt/sec')
 
 
 class FpsText(TextSprite):
