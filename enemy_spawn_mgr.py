@@ -11,7 +11,7 @@ from pygame import Vector2 as Vec2
 from enemy import EnemyWithHealth
 from pg_util import vec2_from_polar
 from uses_game import UsesGame
-from util import uniform_from_mean
+from util import uniform_from_mean, clamp
 
 if TYPE_CHECKING:
     from main import HasGame
@@ -29,10 +29,12 @@ class EnemySpawnStrategy(UsesGame, ABC):
 
     @classmethod
     def make_random(cls, spawner: EnemySpawnMgr):
-        return cls(spawner).randomize()
+        self = cls(spawner)
+        self.randomize()
+        return self
 
     @abstractmethod
-    def randomize(self):
+    def randomize(self) -> EnemySpawnStrategy:
         """Randomizes this instance **inplace**!, returns self"""
 
     @abstractmethod
@@ -83,15 +85,17 @@ class ClusterEnemySpawn(EnemySpawnStrategy):
         self.enemy_health_list = []
 
     def randomize(self):
-        total_health = self.spawner.base_enemy_health * 1.6
+        total_health = self.spawner.base_enemy_health * 2.5
         mean_amount = self.spawner.strength * 3.0
         amount = round(random.uniform(mean_amount * 0.7, mean_amount * 1.3))
+        amount = clamp(amount, 2, None)
         mean_health = total_health / amount
         health_min = math.floor(mean_health) - 1
         health_max = math.ceil(mean_health) + 1
         self.enemy_health_list = [
             random.uniform(health_min, health_max) for _ in range(amount)]
         self.total_health = sum(self.enemy_health_list)
+        return self
 
     def spawn(self):
         mean_distance = random.uniform(250, 500)
@@ -109,6 +113,7 @@ class ClusterEnemySpawn(EnemySpawnStrategy):
                 distance = random.uniform(
                     250, mean_distance + distance_variation)
             pos = vec2_from_polar((distance, angle))
+            pos += self.player.pos
             enemies.append(EnemyWithHealth(self, pos, health))
         return enemies
 
