@@ -56,3 +56,10 @@ class TestUsesGame(TestCase):
         inst = Sub.__new__(Sub)
         inst.set_game(None)
         self.assertIs(inst.game, g)
+
+    def test__set_game__new_has_prio(self):
+        inst = UsesGame.__new__(UsesGame)
+        inst.game = obj()
+        g2 = obj()
+        inst.set_game(g2)
+        self.assertIs(inst.game, g2)
