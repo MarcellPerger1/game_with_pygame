@@ -93,7 +93,7 @@ class ClusterEnemySpawn(EnemySpawnStrategy):
         health_min = math.floor(mean_health) - 1
         health_max = math.ceil(mean_health) + 1
         self.enemy_health_list = [
-            random.uniform(health_min, health_max) for _ in range(amount)]
+            random.randint(health_min, health_max) for _ in range(amount)]
         self.total_health = sum(self.enemy_health_list)
         return self
 
