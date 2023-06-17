@@ -331,7 +331,7 @@ class Player(CommonSprite):
 
     def on_kill_enemy(self, enemy: EnemyWithHealth, _bullet: Bullet):
         self.enemies_killed += 1
-        self.turrets += 0.1 + 0.1 * enemy.max_hp
+        self.turrets += 0.165 + 0.035 * enemy.max_hp
         self.score += int(enemy.max_hp)
 
     def die(self):
