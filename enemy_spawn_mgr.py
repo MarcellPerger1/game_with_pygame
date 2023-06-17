@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import random
 from typing import TYPE_CHECKING
 
@@ -21,7 +22,7 @@ MIN_SPAWN_INTERVAL = 0.01
 class EnemySpawnMgr2(UsesGame):
     next_enemy_health: int
 
-    def __init__(self, game: HasGame, strength=0.01, enabled=False, start_points=0.0):
+    def __init__(self, game: HasGame, strength=0.005, enabled=False, start_points=0.0):
         super().__init__(game)
         self.points = start_points
         self.strength = strength
@@ -38,11 +39,10 @@ class EnemySpawnMgr2(UsesGame):
             self.enabled = True
 
     def decide_next_enemy(self):
-        desired_wait_time = 60  # ticks
-        health_after_wait_time = desired_wait_time * self.strength
-        if health_after_wait_time <= 1.0:
-            health_after_wait_time = 1.0
-        health = random.triangular(1, health_after_wait_time * 2)
+        target_health = math.sqrt(self.strength*40)
+        health = random.uniform(1, target_health * 2)
+        self.game.log.debug(f"Next enemy has {health=:.2f} "
+                            f"~ uniform(1, {target_health * 2:.2f})")
         self.next_enemy_health = round(health)
 
     def on_tick(self):
@@ -50,14 +50,14 @@ class EnemySpawnMgr2(UsesGame):
         if not self.enabled:
             return
         self.points += self.strength
-        self.strength += 0.0005 / 60
+        self.strength += 0.0001 / 60
         while self.points >= self.next_enemy_health:
             self.spawn_enemy()
 
     def on_kill_enemy(self, enemy: EnemyWithHealth):
         if not self.enabled:
             return
-        self.strength += enemy.max_hp * 0.002
+        self.strength += 0.0006 + enemy.max_hp * 0.0004
 
     def spawn_enemy(self):
         angle = random.uniform(0, 360)
@@ -67,6 +67,7 @@ class EnemySpawnMgr2(UsesGame):
         at += Vec2(self.player.pos)
         health = self.next_enemy_health
         EnemyWithHealth(self, at, health)
+        self.game.log.info(f"Spawned enemy with {health=}")
         self.points -= health
         self.decide_next_enemy()
 
