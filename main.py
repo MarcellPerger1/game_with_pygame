@@ -13,7 +13,7 @@ from bullet import Bullet
 from collectable import TurretItem
 from containers import HasRect
 from enemy import CommonEnemy, EnemyWithHealth
-from enemy_spawn_mgr import EnemySpawnMgr
+from enemy_spawn_mgr import EnemySpawnMgr2
 from perf import PerfMgr
 from pg_util import render_text
 from sprite_bases import CommonSprite, RectUpdatingSprite
@@ -134,7 +134,7 @@ class Game:
 
     def _init_components(self):
         self.log.info('Initializing components')
-        self.enemy_spawner = EnemySpawnMgr(self)
+        self.enemy_spawner = EnemySpawnMgr2(self)
         self.perf_mgr = PerfMgr()
         self.tutorial = Tutorial(self)
 
@@ -216,7 +216,7 @@ class Game:
         self.on_post_tick()
 
     def on_post_tick(self):
-        self.enemy_spawner.handle_enemy_spawns()
+        self.enemy_spawner.on_tick()
 
     def on_player_die(self):
         GameOver(self, f'Game Over\nScore: {self.player.enemies_killed}')
@@ -224,7 +224,7 @@ class Game:
 
     # todo observer pattern for on_* methods
     def on_kill_enemy(self, enemy, bullet):
-        self.enemy_spawner.increment_interval_once()
+        self.enemy_spawner.on_kill_enemy(enemy)
         self.player.on_kill_enemy(enemy, bullet)
 
     def handle_events(self):
@@ -383,10 +383,10 @@ class EnemyInfoText(TextSprite):
         return self.surf.get_rect(topleft=self.pos)
 
     def update(self, *args: Any, **kwargs: Any) -> None:
-        spawn_interval = self.game.enemy_spawner.enemy_spawn_interval
+        spawn_interval = self.game.enemy_spawner.strength
         self.set_text(f'Enemies killed: {self.player.enemies_killed}\n'
                       f'Enemies currently alive: {len(self.game.enemies)}\n'
-                      f'Enemy spawn interval: {spawn_interval:.3f}')
+                      f'Enemy strength: {spawn_interval:.3f}')
 
 
 class FpsText(TextSprite):
@@ -413,7 +413,7 @@ class Tutorial(UsesGame):
 
     @trigger_once
     def place_turret(self):
-        self.game.enemy_spawner.is_enabled = True
+        self.game.enemy_spawner.enable()
         self.game.initial_enemy.immobile = False
 
 

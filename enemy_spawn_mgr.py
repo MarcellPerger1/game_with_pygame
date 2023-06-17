@@ -34,7 +34,7 @@ class EnemySpawnMgr2(UsesGame):
         self.check_if_should_enable()
 
     def check_if_should_enable(self):
-        if self.curr_tick >= self.enable_after:
+        if self.enable_after is not None and self.curr_tick >= self.enable_after:
             self.enabled = True
 
     def decide_next_enemy(self):
@@ -51,6 +51,8 @@ class EnemySpawnMgr2(UsesGame):
             return
         self.points += self.strength
         self.strength += 0.0005 / 60
+        while self.points >= self.next_enemy_health:
+            self.spawn_enemy()
 
     def on_kill_enemy(self, enemy: EnemyWithHealth):
         if not self.enabled:
