@@ -34,7 +34,7 @@ class EnemySpawnStrategy(UsesGame, ABC):
 
 
 class SingleEnemySpawn(EnemySpawnStrategy):
-    def __init__(self, spawner: EnemySpawnMgr2, health: int = 1):
+    def __init__(self, spawner: EnemySpawnMgr, health: int = 1):
         super().__init__(spawner)
         self.spawner = spawner
         self.health = health
@@ -49,7 +49,7 @@ class SingleEnemySpawn(EnemySpawnStrategy):
         return self
 
     @classmethod
-    def make_random(cls, spawner: EnemySpawnMgr2):
+    def make_random(cls, spawner: EnemySpawnMgr):
         return cls(spawner).randomize()
 
     def spawn(self):
@@ -67,7 +67,7 @@ class SingleEnemySpawn(EnemySpawnStrategy):
         return f'{type(self).__qualname__} with health={self.health}'
 
 
-class EnemySpawnMgr2(UsesGame):
+class EnemySpawnMgr(UsesGame):
     next_enemy: EnemySpawnStrategy
 
     def __init__(self, game: HasGame, strength=0.005, enabled=False, start_points=0.0):
@@ -115,7 +115,7 @@ class EnemySpawnMgr2(UsesGame):
         self.decide_next_enemy()
 
 
-class EnemySpawnMgr(UsesGame):
+class _EnemySpawnMgrOld(UsesGame):
     def __init__(self, game: HasGame):
         super().__init__(game)
         self.is_enabled = False

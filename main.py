@@ -13,7 +13,7 @@ from bullet import Bullet
 from collectable import TurretItem
 from containers import HasRect
 from enemy import CommonEnemy, EnemyWithHealth
-from enemy_spawn_mgr import EnemySpawnMgr2
+from enemy_spawn_mgr import EnemySpawnMgr
 from perf import PerfMgr
 from pg_util import render_text
 from sprite_bases import CommonSprite, RectUpdatingSprite
@@ -134,7 +134,7 @@ class Game:
 
     def _init_components(self):
         self.log.info('Initializing components')
-        self.enemy_spawner = EnemySpawnMgr2(self)
+        self.enemy_spawner = EnemySpawnMgr(self)
         self.perf_mgr = PerfMgr()
         self.tutorial = Tutorial(self)
 
