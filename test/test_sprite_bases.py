@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TypeVar, Any
 from unittest import TestCase
 
+import pygame as pg
+
 from sprite_bases import GroupMemberSprite
 
 T = TypeVar('T')
@@ -27,18 +29,19 @@ def obj(name: str = None) -> Any:
         return _NamedObject(name)
 
 
+class NoPropsGroupMember(GroupMemberSprite):
+    display_group = None
+    root_group = None
+
+
 class TestGroupMemberSprite(TestCase):
     def inst(self, klass=GroupMemberSprite):
         return new(klass)
 
     def test__set_group_flags(self):
-        class NoPropsSub(GroupMemberSprite):
-            display_group = None
-            root_group = None
-
         def setup_inst(root, display):
             # noinspection PyTypeChecker
-            s2: NoPropsSub = self.inst(NoPropsSub)
+            s2: NoPropsGroupMember = self.inst(NoPropsGroupMember)
             s2.root_group = obj("root_group")
             s2.display_group = obj("display_group")
             s2.in_root = root
@@ -86,4 +89,27 @@ class TestGroupMemberSprite(TestCase):
         self.assertIs(s.in_root, v1)
         self.assertIs(s.in_display, v2)
 
+    def test_init(self):
+        def setup_inst():
+            # noinspection PyTypeChecker
+            s2: NoPropsGroupMember = self.inst(NoPropsGroupMember)
+            s2.root_group = pg.sprite.Group()
+            s2.display_group = pg.sprite.Group()
+            return s2
+
+        game = obj()
+        g1 = pg.sprite.Group()
+        g2 = pg.sprite.Group()
+        inst = setup_inst()
+        inst.__init__(game, g1, g2, in_display=False)
+        self.assertIs(inst.game, game)
+        self.assertEqual(set(inst.groups()), {g1, g2, inst.root_group})
+        self.assertEqual(inst.in_root, True)
+        self.assertEqual(inst.in_display, False)
+        i2 = setup_inst()
+        i2.__init__(game, in_root=False)
+        self.assertEqual(i2.game, game)
+        self.assertEqual(set(i2.groups()), set())
+        self.assertEqual(i2.in_root, False)
+        self.assertEqual(i2.in_display, False)
 
