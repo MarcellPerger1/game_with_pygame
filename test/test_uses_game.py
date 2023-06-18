@@ -1,6 +1,6 @@
 from typing import Any
 from unittest import TestCase
-# from unittest.mock import NonCallableMock, PropertyMock
+from unittest.mock import patch
 
 from uses_game import UsesGame
 
@@ -63,3 +63,22 @@ class TestUsesGame(TestCase):
         g2 = obj()
         inst.set_game(g2)
         self.assertIs(inst.game, g2)
+
+    def test__init__game(self):
+        g = obj()
+        inst = UsesGame(g)
+        self.assertIs(inst.game, g)
+
+    def test__init__uses_game(self):
+        g = obj()
+        ug = UsesGame.__new__(UsesGame)
+        ug.game = g
+        inst = UsesGame(ug)
+        self.assertIs(inst.game, g)
+
+    def test__init__calls_set_game(self):
+        with patch.object(UsesGame, 'set_game') as mock_set_game:
+            g = obj()
+            UsesGame(g)
+            mock_set_game.assert_called_once_with(g, True, '__init__')
+
