@@ -32,19 +32,24 @@ def obj(name: str = None) -> Any:
         return _NamedObject(name)
 
 
-class NoPropsGroupMember(GroupMemberSprite):
-    display_group = None
-    root_group = None
-
-
 class TestGroupMemberSprite(TestCase):
-    def inst(self, klass=GroupMemberSprite):
+    target_cls = GroupMemberSprite
+
+    @classmethod
+    def no_props_cls(cls):
+        class NoPropsSprite(cls.target_cls):
+            display_group = None
+            root_group = None
+        return NoPropsSprite
+
+    def inst(self, klass=None):
+        if klass is None:
+            klass = self.target_cls
         return new(klass)
 
     def test__set_group_flags(self):
         def setup_inst(root, display):
-            # noinspection PyTypeChecker
-            s2: NoPropsGroupMember = self.inst(NoPropsGroupMember)
+            s2 = self.inst(self.no_props_cls())
             s2.root_group = obj("root_group")
             s2.display_group = obj("display_group")
             s2.in_root = root
@@ -84,7 +89,7 @@ class TestGroupMemberSprite(TestCase):
         v1 = obj()
         v2 = obj()
 
-        class Sub(GroupMemberSprite):
+        class Sub(self.target_cls):
             in_root = v1
             in_display = v2
         s = self.inst(Sub)
@@ -94,8 +99,7 @@ class TestGroupMemberSprite(TestCase):
 
     def test_init_GroupMemberSprite(self):
         def setup_inst():
-            # noinspection PyTypeChecker
-            s2: NoPropsGroupMember = self.inst(NoPropsGroupMember)
+            s2 = self.inst(self.no_props_cls())
             s2.root_group = pg.sprite.Group()
             s2.display_group = pg.sprite.Group()
             return s2
@@ -118,6 +122,8 @@ class TestGroupMemberSprite(TestCase):
 
 
 class TestDrawableSprite(TestGroupMemberSprite):
+    target_cls = DrawableSprite
+
     def test_set_surf(self):
         inst = new(DrawableSprite)
         surf = obj("surf")
