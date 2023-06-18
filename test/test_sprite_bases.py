@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import TypeVar, Any
+import contextlib
+from typing import TypeVar, Any, Iterable
 from unittest import TestCase
+from unittest.mock import patch
 
 import pygame as pg
 
-from sprite_bases import GroupMemberSprite
+from sprite_bases import GroupMemberSprite, DrawableSprite
+from uses_game import UsesGame
 
 T = TypeVar('T')
 
@@ -89,7 +92,7 @@ class TestGroupMemberSprite(TestCase):
         self.assertIs(s.in_root, v1)
         self.assertIs(s.in_display, v2)
 
-    def test_init(self):
+    def test_init_GroupMemberSprite(self):
         def setup_inst():
             # noinspection PyTypeChecker
             s2: NoPropsGroupMember = self.inst(NoPropsGroupMember)
@@ -113,3 +116,86 @@ class TestGroupMemberSprite(TestCase):
         self.assertEqual(i2.in_root, False)
         self.assertEqual(i2.in_display, False)
 
+
+class TestDrawableSprite(TestGroupMemberSprite):
+    def test_set_surf(self):
+        inst = new(DrawableSprite)
+        surf = obj("surf")
+        inst.set_surf(surf)
+        self.assertIs(inst.image, surf)
+        self.assertIs(inst.surf, surf)
+
+    def test_init_DrawableSprite(self):
+        surf = obj("surf")
+        rect = obj("rect")
+        with MultiContextManager(patch_groups(DrawableSprite)):
+            inst = DrawableSprite(obj(), surf=surf, rect=rect)
+            self.assertIs(inst.surf, surf)
+            self.assertIs(inst.image, surf)
+            self.assertIs(inst.rect, rect)
+
+        inst: DrawableSprite = NoPropsDrawableSprite.new_with_dummy_groups()
+        inst.rect = rect
+        inst.image = inst.surf = surf
+        inst.__init__(obj())
+        self.assertIs(inst.surf, surf)
+        self.assertIs(inst.image, surf)
+        self.assertIs(inst.rect, rect)
+
+
+class NoGroupPropsMixin:
+    display_group = None
+    root_group = None
+
+    def __init__(self, *args, **kwargs):
+        # next class in mro NOT superclass
+        super().__init__(*args, **kwargs)
+
+    @classmethod
+    def new_with_dummy_groups(cls) -> Any | NoGroupPropsMixin:
+        assert (
+            UsesGame not in cls.mro()
+            or cls.mro().index(cls) < cls.mro().index(UsesGame)
+        ), "NoGroupPropsMixin must come before UsesGame in mro"
+        inst = cls.__new__(cls)
+        inst.root_group = pg.sprite.Group()
+        inst.display_group = pg.sprite.Group()
+        return inst
+
+
+class NoPropsDrawableSprite(NoGroupPropsMixin, DrawableSprite):
+    ...
+
+
+class MultiContextManager(contextlib.AbstractContextManager):
+    def __init__(self, *contexts: contextlib.AbstractContextManager):
+        self.contexts = contexts
+
+    def __enter__(self):
+        return tuple(c.__enter__() for c in self.contexts)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # exit out of the contexts backwards:
+        # enter 0 -> (enter 1 -> (...) -> exit 1) -> exit 0
+        ignore_error = False
+        for c in reversed(self.contexts):
+            if c.__exit__(exc_type, exc_val, exc_tb):
+                ignore_error = True
+                # don't propagate error to outer context
+                # (this context caught the error)
+                exc_type = exc_val = exc_tb = None
+        return ignore_error
+
+
+def multipatch(t: type | object, *patches: tuple[str, Any], **kw_patches):
+    return MultiContextManager(
+        *(patch.object(t, k, v) for k, v in patches),
+        *(patch.object(t, k, v) for k, v in kw_patches.items())
+    )
+
+
+def patch_groups(t: type):
+    return MultiContextManager(
+        patch.object(t, 'root_group', pg.sprite.Group()),
+        patch.object(t, 'display_group', pg.sprite.Group())
+    )
