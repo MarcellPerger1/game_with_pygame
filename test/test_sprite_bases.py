@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import contextlib
-from typing import TypeVar, Any, Iterable
+from typing import TypeVar, Any
 from unittest import TestCase
 from unittest.mock import patch
 
 import pygame as pg
+from pygame import Vector2 as Vec2
 
 from sprite_bases import GroupMemberSprite, DrawableSprite, SizedSprite
 from uses_game import UsesGame
@@ -42,14 +43,14 @@ class TestGroupMemberSprite(TestCase):
             root_group = None
         return NoPropsSprite
 
-    def inst(self, klass=None):
+    def new_inst(self, klass=None):
         if klass is None:
             klass = self.target_cls
         return new(klass)
 
     def test__set_group_flags(self):
         def setup_inst(root, display):
-            s2 = self.inst(self.no_props_cls())
+            s2 = self.new_inst(self.no_props_cls())
             s2.root_group = obj("root_group")
             s2.display_group = obj("display_group")
             s2.in_root = root
@@ -71,18 +72,18 @@ class TestGroupMemberSprite(TestCase):
         for in_root in True, False:
             for in_display in True, False:
                 with self.subTest(in_root=in_root, in_display=in_display):
-                    s = self.inst()
+                    s = self.new_inst()
                     s._set_group_flags(in_root, in_display)
                     self.assertEqual(s.in_root, in_root)
                     self.assertEqual(s.in_display, in_display)
         with self.subTest(in_root=None, in_display=None):
-            s = self.inst()
+            s = self.new_inst()
             s._set_group_flags(None, None)
             self.assertEqual(s.in_root, True)
             self.assertEqual(s.in_display, True)
         for in_root in True, False:
             with self.subTest(in_root=in_root, in_display=None):
-                s = self.inst()
+                s = self.new_inst()
                 s._set_group_flags(in_root, None)
                 self.assertEqual(s.in_root, in_root)
                 self.assertEqual(s.in_display, in_root)
@@ -92,17 +93,25 @@ class TestGroupMemberSprite(TestCase):
         class Sub(self.target_cls):
             in_root = v1
             in_display = v2
-        s = self.inst(Sub)
+        s = self.new_inst(Sub)
         s._set_group_flags(None, None)
         self.assertIs(s.in_root, v1)
         self.assertIs(s.in_display, v2)
 
+    def on_pre_init(self, inst):
+        ...
+
+    def init_inst_obj(self, inst, *args, **kwargs):
+        self.on_pre_init(inst)
+        inst.__init__(*args, **kwargs)
+
     def test_init_GroupMemberSprite(self):
         def setup_inst():
-            s2 = self.inst(self.no_props_cls())
-            s2.root_group = pg.sprite.Group()
-            s2.display_group = pg.sprite.Group()
-            return s2
+            i = self.new_inst(self.no_props_cls())
+            i.root_group = pg.sprite.Group()
+            i.display_group = pg.sprite.Group()
+            self.on_pre_init(i)
+            return i
 
         game = obj()
         g1 = pg.sprite.Group()
@@ -141,7 +150,9 @@ class TestDrawableSprite(TestGroupMemberSprite):
         surf = obj("surf")
         rect = obj("rect")
         with MultiContextManager(patch_groups(self.target_cls)):
-            inst = self.target_cls(obj(), surf=surf, rect=rect)
+            inst = self.new_inst()
+            self.on_pre_init(inst)
+            inst.__init__(obj(), surf=surf, rect=rect)
             self.assertIs(inst.surf, surf)
             self.assertIs(inst.image, surf)
             self.assertIs(inst.rect, rect)
@@ -149,6 +160,7 @@ class TestDrawableSprite(TestGroupMemberSprite):
         inst: DrawableSprite = self.no_props_mixed().new_with_dummy_groups()
         inst.rect = rect
         inst.image = inst.surf = surf
+        self.on_pre_init(inst)
         inst.__init__(obj())
         self.assertIs(inst.surf, surf)
         self.assertIs(inst.image, surf)
@@ -157,6 +169,9 @@ class TestDrawableSprite(TestGroupMemberSprite):
 
 class TestSizedSprite(TestDrawableSprite):
     target_cls = SizedSprite
+
+    def on_pre_init(self, inst: SizedSprite):
+        inst.size = Vec2(40, 30)
 
 
 class NoGroupPropsMixin:
