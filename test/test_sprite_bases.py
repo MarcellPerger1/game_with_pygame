@@ -254,9 +254,38 @@ class TestSizedSprite(TestDrawableSprite):
         inst.__init__(obj())
         self.assertIs(inst.size, size)
 
+        inst = self.no_props_mixed().new_with_dummy_groups()
+        inst.size = obj("size_on_class")
+        self.pre_init(inst, SizedSprite)
+        inst.__init__(obj(), size=size)
+        self.assertIs(inst.size, size)
+
+        # if later the error behavior changes, this is the part to change
+        with self.assertRaises(TypeError) as r:
+            inst = self.no_props_mixed().new_with_dummy_groups()
+            self.pre_init(inst, SizedSprite)
+            inst.__init__(obj())
+        self.assertIn('size', str(r.exception))
+
 
 class TestPositionedSprite(TestSizedSprite):
     target_cls = PositionedSprite
+
+    def test_init_PositionedSprite(self):
+        pos = obj("pos")
+        with MultiContextManager(patch_groups(self.target_cls)):
+            inst = self.new_inst()
+            self.pre_init(inst, PositionedSprite)
+            inst.__init__(obj(), pos=pos)
+            self.assertIs(inst.pos, pos)
+
+        with MultiContextManager(
+                patch_groups(self.target_cls),
+                patch.object(self.target_cls, 'pos', pos)):
+            inst = self.new_inst()
+            self.pre_init(inst, PositionedSprite)
+            inst.__init__(obj())
+            self.assertIs(inst.pos, pos)
 
     def on_pre_init(self, inst: PositionedSprite):
         inst.pos = Vec2(23, 109)
