@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import contextlib
-from typing import TypeVar, Any
+from typing import TypeVar, Any, Callable
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -33,7 +33,52 @@ def obj(name: str = None) -> Any:
         return _NamedObject(name)
 
 
-class TestGroupMemberSprite(TestCase):
+class BaseTest(TestCase):
+    _pre_init_list: tuple[tuple[BaseTest, Callable]] = ()
+    """``((type, pre_init_fn), ...)``"""
+    target_cls = None
+
+    def on_pre_init(self, inst):
+        ...
+
+    def pre_init(self, inst, caller_cls):
+        for cls, fn in self._pre_init_list:
+            # only call the pre_init if this test doesn't belong to it.
+            # If this pre_init belongs to this test,
+            # we're testing the class with this pre_init so we may want to
+            # set new values for the fields so don't do anything
+            # as the new values would interfere with the test values
+            # e.g. SizedSprite sets .size in pre_init but the tests
+            # also require it to be set to their own value
+            # so we need to skip running this pre_init
+            if cls != caller_cls and cls.target_cls != caller_cls:
+                self.on_pre_init(inst)
+
+    def __init_subclass__(cls, **kwargs):
+        if (cls.on_pre_init is not None
+                and cls.on_pre_init != BaseTest.on_pre_init
+                and not getattr(cls.on_pre_init, 'is_nop', False)):
+            cls._pre_init_list += ((cls, cls._pre_init_list),)
+
+    def new_inst(self, klass=None):
+        if klass is None:
+            klass = self.target_cls
+        return new(klass)
+
+    def init_inst_obj(self, inst, caller_cls, *args, **kwargs):
+        self.pre_init(inst, caller_cls)
+        inst.__init__(*args, **kwargs)
+
+    def init_new(self, caller_cls, *args, **kwargs):
+        inst = self.new_inst()
+        self.init_inst_obj(inst, caller_cls, *args, **kwargs)
+
+
+def mark_as_nop(fn):
+    fn.is_nop = True
+
+
+class TestGroupMemberSprite(BaseTest):
     target_cls = GroupMemberSprite
 
     @classmethod
@@ -43,11 +88,6 @@ class TestGroupMemberSprite(TestCase):
             root_group = None
 
         return NoPropsSprite
-
-    def new_inst(self, klass=None):
-        if klass is None:
-            klass = self.target_cls
-        return new(klass)
 
     def test__set_group_flags(self):
         def setup_inst(root, display):
@@ -100,19 +140,12 @@ class TestGroupMemberSprite(TestCase):
         self.assertIs(s.in_root, v1)
         self.assertIs(s.in_display, v2)
 
-    def on_pre_init(self, inst):
-        ...
-
-    def init_inst_obj(self, inst, *args, **kwargs):
-        self.on_pre_init(inst)
-        inst.__init__(*args, **kwargs)
-
     def test_init_GroupMemberSprite(self):
         def setup_inst():
             i = self.new_inst(self.no_props_cls())
             i.root_group = pg.sprite.Group()
             i.display_group = pg.sprite.Group()
-            self.on_pre_init(i)
+            self.pre_init(i, TestGroupMemberSprite)
             return i
 
         game = obj()
@@ -154,7 +187,7 @@ class TestDrawableSprite(TestGroupMemberSprite):
         rect = obj("rect")
         with MultiContextManager(patch_groups(self.target_cls)):
             inst = self.new_inst()
-            self.on_pre_init(inst)
+            self.pre_init(inst, DrawableSprite)
             inst.__init__(obj(), surf=surf, rect=rect)
             self.assertIs(inst.surf, surf)
             self.assertIs(inst.image, surf)
@@ -163,7 +196,7 @@ class TestDrawableSprite(TestGroupMemberSprite):
         inst: DrawableSprite = self.no_props_mixed().new_with_dummy_groups()
         inst.rect = rect
         inst.image = inst.surf = surf
-        self.on_pre_init(inst)
+        self.pre_init(inst, DrawableSprite)
         inst.__init__(obj())
         self.assertIs(inst.surf, surf)
         self.assertIs(inst.image, surf)
@@ -211,13 +244,13 @@ class TestSizedSprite(TestDrawableSprite):
         size = obj("size")
         with MultiContextManager(patch_groups(self.target_cls)):
             inst = self.new_inst()
-            self.on_pre_init(inst)
+            self.pre_init(inst, SizedSprite)
             inst.__init__(obj(), size=size)
             self.assertIs(inst.size, size)
 
         inst = self.no_props_mixed().new_with_dummy_groups()
         inst.size = size
-        self.on_pre_init(inst)
+        self.pre_init(inst, SizedSprite)
         inst.__init__(obj())
         self.assertIs(inst.size, size)
 
