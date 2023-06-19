@@ -207,6 +207,20 @@ class TestSizedSprite(TestDrawableSprite):
         with self.assertRaises(TypeError):
             self.target_cls.get_virtual_rect(pos)
 
+    def test_init_SizedSprite(self):
+        size = obj("size")
+        with MultiContextManager(patch_groups(self.target_cls)):
+            inst = self.new_inst()
+            self.on_pre_init(inst)
+            inst.__init__(obj(), size=size)
+            self.assertIs(inst.size, size)
+
+        inst = self.no_props_mixed().new_with_dummy_groups()
+        inst.size = size
+        self.on_pre_init(inst)
+        inst.__init__(obj())
+        self.assertIs(inst.size, size)
+
 
 class NoGroupPropsMixin:
     display_group = None
