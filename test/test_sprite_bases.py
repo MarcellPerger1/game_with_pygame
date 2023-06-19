@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pygame as pg
 
-from sprite_bases import GroupMemberSprite, DrawableSprite
+from sprite_bases import GroupMemberSprite, DrawableSprite, SizedSprite
 from uses_game import UsesGame
 
 T = TypeVar('T')
@@ -124,6 +124,12 @@ class TestGroupMemberSprite(TestCase):
 class TestDrawableSprite(TestGroupMemberSprite):
     target_cls = DrawableSprite
 
+    @classmethod
+    def no_props_mixed(cls):
+        class NoPropsMixedSprite(NoGroupPropsMixin, cls.target_cls):
+            ...
+        return NoPropsMixedSprite
+
     def test_set_surf(self):
         inst = new(DrawableSprite)
         surf = obj("surf")
@@ -134,19 +140,23 @@ class TestDrawableSprite(TestGroupMemberSprite):
     def test_init_DrawableSprite(self):
         surf = obj("surf")
         rect = obj("rect")
-        with MultiContextManager(patch_groups(DrawableSprite)):
-            inst = DrawableSprite(obj(), surf=surf, rect=rect)
+        with MultiContextManager(patch_groups(self.target_cls)):
+            inst = self.target_cls(obj(), surf=surf, rect=rect)
             self.assertIs(inst.surf, surf)
             self.assertIs(inst.image, surf)
             self.assertIs(inst.rect, rect)
 
-        inst: DrawableSprite = NoPropsDrawableSprite.new_with_dummy_groups()
+        inst: DrawableSprite = self.no_props_mixed().new_with_dummy_groups()
         inst.rect = rect
         inst.image = inst.surf = surf
         inst.__init__(obj())
         self.assertIs(inst.surf, surf)
         self.assertIs(inst.image, surf)
         self.assertIs(inst.rect, rect)
+
+
+class TestSizedSprite(TestDrawableSprite):
+    target_cls = SizedSprite
 
 
 class NoGroupPropsMixin:
