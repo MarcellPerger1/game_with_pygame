@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pygame as pg
 from pygame import Vector2 as Vec2
 
-from sprite_bases import GroupMemberSprite, DrawableSprite, SizedSprite
+from sprite_bases import GroupMemberSprite, DrawableSprite, SizedSprite, PositionedSprite
 from uses_game import UsesGame
 
 T = TypeVar('T')
@@ -34,7 +34,7 @@ def obj(name: str = None) -> Any:
 
 
 class BaseTest(TestCase):
-    _pre_init_list: tuple[tuple[BaseTest, Callable]] = ()
+    _pre_init_list: tuple[tuple[BaseTest, Callable[[BaseTest, Any], Any]]] = ()
     """``((type, pre_init_fn), ...)``"""
     target_cls = None
 
@@ -52,13 +52,13 @@ class BaseTest(TestCase):
             # also require it to be set to their own value
             # so we need to skip running this pre_init
             if cls != caller_cls and cls.target_cls != caller_cls:
-                self.on_pre_init(inst)
+                fn(self, inst)
 
     def __init_subclass__(cls, **kwargs):
         if (cls.on_pre_init is not None
                 and cls.on_pre_init != BaseTest.on_pre_init
                 and not getattr(cls.on_pre_init, 'is_nop', False)):
-            cls._pre_init_list += ((cls, cls._pre_init_list),)
+            cls._pre_init_list += ((cls, cls.on_pre_init),)
 
     def new_inst(self, klass=None):
         if klass is None:
@@ -253,6 +253,13 @@ class TestSizedSprite(TestDrawableSprite):
         self.pre_init(inst, SizedSprite)
         inst.__init__(obj())
         self.assertIs(inst.size, size)
+
+
+class TestPositionedSprite(TestSizedSprite):
+    target_cls = PositionedSprite
+
+    def on_pre_init(self, inst: PositionedSprite):
+        inst.pos = Vec2(23, 109)
 
 
 class NoGroupPropsMixin:
