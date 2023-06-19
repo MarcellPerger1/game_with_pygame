@@ -41,6 +41,7 @@ class TestGroupMemberSprite(TestCase):
         class NoPropsSprite(cls.target_cls):
             display_group = None
             root_group = None
+
         return NoPropsSprite
 
     def new_inst(self, klass=None):
@@ -93,6 +94,7 @@ class TestGroupMemberSprite(TestCase):
         class Sub(self.target_cls):
             in_root = v1
             in_display = v2
+
         s = self.new_inst(Sub)
         s._set_group_flags(None, None)
         self.assertIs(s.in_root, v1)
@@ -137,6 +139,7 @@ class TestDrawableSprite(TestGroupMemberSprite):
     def no_props_mixed(cls):
         class NoPropsMixedSprite(NoGroupPropsMixin, cls.target_cls):
             ...
+
         return NoPropsMixedSprite
 
     def test_set_surf(self):
@@ -172,6 +175,37 @@ class TestSizedSprite(TestDrawableSprite):
 
     def on_pre_init(self, inst: SizedSprite):
         inst.size = Vec2(40, 30)
+
+    def test_get_virtual_rect(self):
+        sz = Vec2(25, 20)
+        sz2 = Vec2(-99, 61)
+        pos = Vec2(40, 100)
+
+        class Sub(self.target_cls):
+            size = sz
+
+        # dark magic with patch(...):
+        # it LITERALLY replaces the rect_from_size
+        # global in the sprite_bases module with a mock version!
+        with patch('sprite_bases.rect_from_size') as m:
+            m.return_value = obj("returned rect")
+            self.assertIs(Sub.get_virtual_rect(pos), m.return_value)
+            m.assert_called_once_with(sz, center=pos)
+
+        with patch('sprite_bases.rect_from_size') as m:
+            m.return_value = obj("returned rect")
+            self.assertIs(self.target_cls.get_virtual_rect(pos, sz),
+                          m.return_value)
+            m.assert_called_once_with(sz, center=pos)
+
+        with patch('sprite_bases.rect_from_size') as m:
+            m.return_value = obj("returned rect")
+            self.assertIs(Sub.get_virtual_rect(pos, Vec2(sz2)),
+                          m.return_value)
+            m.assert_called_once_with(sz2, center=pos)
+
+        with self.assertRaises(TypeError):
+            self.target_cls.get_virtual_rect(pos)
 
 
 class NoGroupPropsMixin:
