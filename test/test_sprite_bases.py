@@ -333,8 +333,12 @@ class TestRectUpdatingSprite(TestSurfaceMakingSprite):
 
     def test_init_RectUpdatingSprite(self):
         # if rect provided
+        # the set_pos mock is so that we don't count the call from there
+        def new_set_pos(self_inner, value):
+            self_inner._pos = value
         with patch.object(self.target_cls, 'update_rect') as m_update_rect, \
                 patch.object(self.target_cls, 'create_rect') as m_create_rect, \
+                patch.object(self.target_cls, 'set_pos', new_set_pos), \
                 patch_groups(self.target_cls):
             inst: RectUpdatingSprite = self.new_inst()
             self.pre_init(inst, RectUpdatingSprite)
