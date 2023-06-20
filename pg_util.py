@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from math import inf
-from typing import Sequence
+from typing import Sequence, TYPE_CHECKING
 
 import pygame as pg
 from pygame import Vector2 as Vec2
@@ -75,3 +75,26 @@ else:
                 min_dist = dist
                 sprite = s
         return sprite
+
+if 1:
+    # don't really want to have this here but it's not used
+    # and doesn't fit nicely in any other file.
+    # This file should ideally be for things
+    # that don't interact use / interact with the main game.
+    # I want to keep this import here not at the top to reduce clutter.
+    # also, it can easily be switched on/off using the if above
+    from uses_game import UsesGame
+
+    if TYPE_CHECKING:
+        from main import HasGame
+
+
+    class EveryNTicks(UsesGame):
+        def __init__(self, game: HasGame, n: int, offset=1):
+            super().__init__(game)
+            self.n = n
+            self.started_at = self.curr_tick + offset
+
+        def is_this_frame(self):
+            return (self.curr_tick >= self.started_at
+                    and (self.curr_tick - self.started_at) % self.n == 0)

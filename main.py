@@ -265,17 +265,6 @@ class Game:
 HasGame = Union[UsesGame, Game]
 
 
-class EveryNTicks(UsesGame):
-    def __init__(self, game: HasGame, n: int, offset=1):
-        super().__init__(game)
-        self.n = n
-        self.started_at = self.curr_tick + offset
-
-    def is_this_frame(self):
-        return (self.curr_tick >= self.started_at
-                and (self.curr_tick - self.started_at) % self.n == 0)
-
-
 class GameOver(TextSprite):
     def __init__(self, game: HasGame, text: str = None):
         self.set_game(game)
