@@ -12,7 +12,7 @@ from pygame import Vector2 as Vec2
 from collectable import TurretItem
 from enemy import EnemyWithHealth
 from enemy_spawn_mgr import EnemySpawnMgr
-from perf import PerfMgr
+from perf import PerfMgr, DEBUG_MEMORY
 from pg_util import render_text
 from player import Player
 from sprite_bases import RectUpdatingSprite
@@ -126,7 +126,7 @@ class Game:
         TurretItem(self, Vec2(400, 600))
         self.initial_enemy = EnemyWithHealth(self, Vec2(50, 655), 1, immobile=True)
         self.turrets_text = TurretsText(self)
-        self.fps_text = FpsText(self, "FPS: N/A")
+        self.fps_text = FpsText(self)
         self.enemy_info_text = EnemyInfoText(self)
 
     def _init_components(self):
@@ -217,7 +217,7 @@ class Game:
         self.enemy_spawner.on_tick()
 
     def on_player_die(self):
-        GameOver(self, f'Game Over\nScore: {self.player.score}')
+        GameOver(self)
         self.log.info("Game over")
 
     # todo observer pattern for on_* methods
@@ -228,9 +228,10 @@ class Game:
     def handle_events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                self.log.info("Taking memory snapshot")
-                self.perf_mgr.take_snapshot()
-                self.log.info("Memory snapshot taken")
+                if DEBUG_MEMORY:
+                    self.log.info("Taking memory snapshot")
+                    self.perf_mgr.take_snapshot()
+                    self.log.info("Memory snapshot taken")
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
                 self.perf_mgr.take_cpu_profile()
@@ -276,8 +277,11 @@ class EveryNTicks(UsesGame):
 
 
 class GameOver(TextSprite):
-    def __init__(self, game: HasGame, text: str):
-        super().__init__(game, text)
+    def __init__(self, game: HasGame, text: str = None):
+        self.set_game(game)
+        if text is None:
+            text = f'Game Over\nScore: {self.player.score}'
+        super().__init__(None, text)
 
     def render_text(self) -> pg.Surface:
         return render_text(self.fonts.huge, self.text, color='black', justify='center')
@@ -329,8 +333,8 @@ class EnemyInfoText(TextSprite):
 
 
 class FpsText(TextSprite):
-    def __init__(self, game: HasGame, text: str):
-        super().__init__(game, text)
+    def __init__(self, game: HasGame):
+        super().__init__(game,  "FPS: N/A")
 
     def render_text(self) -> pg.Surface:
         return render_text(self.fonts.monospace, self.text, True,
