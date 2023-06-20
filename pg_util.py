@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from math import inf
-from typing import Sequence, TYPE_CHECKING
+from typing import Sequence
 
 import pygame as pg
 from pygame import Vector2 as Vec2
