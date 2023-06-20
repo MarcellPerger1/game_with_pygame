@@ -8,7 +8,8 @@ from unittest.mock import patch
 import pygame as pg
 from pygame import Vector2 as Vec2
 
-from sprite_bases import GroupMemberSprite, DrawableSprite, SizedSprite, PositionedSprite
+from sprite_bases import (GroupMemberSprite, DrawableSprite, SizedSprite,
+                          PositionedSprite, SurfaceMakingSprite)
 from uses_game import UsesGame
 
 T = TypeVar('T')
@@ -305,6 +306,21 @@ class TestPositionedSprite(TestSizedSprite):
 
     def on_pre_init(self, inst: PositionedSprite):
         inst.pos = Vec2(23, 109)
+
+
+class TestSurfaceMakingSprite(TestPositionedSprite):
+    target_cls = SurfaceMakingSprite
+
+    def test_init_SurfaceMakingSprite(self):
+        with patch_groups(self.target_cls),\
+                patch.object(self.target_cls, 'make_surface') as m:
+            inst: SurfaceMakingSprite = self.new_inst()
+            self.pre_init(inst, SurfaceMakingSprite)
+            m.return_value = obj('make_surface return')
+            inst.__init__(obj())
+            m.assert_called_once_with()
+            self.assertIs(inst.surf, m.return_value)
+            self.assertIs(inst.image, m.return_value)
 
 
 class NoGroupPropsMixin:
