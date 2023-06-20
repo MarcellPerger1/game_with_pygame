@@ -58,8 +58,8 @@ class SingleEnemySpawn(EnemySpawnStrategy):
         """Randomizes this instance **inplace**!, returns self"""
         mean_health = self.spawner.base_enemy_health
         health = random.uniform(1, mean_health * 2)
-        self.game.log.debug(f"Next SingleEnemySpawn has {health=:.2f} "
-                            f"~ uniform(1, {mean_health * 2:.2f})")
+        self.log.debug(f"Next SingleEnemySpawn has {health=:.2f} "
+                       f"~ uniform(1, {mean_health * 2:.2f})")
         self.health = round(health)
         return self
 
@@ -171,6 +171,6 @@ class EnemySpawnMgr(UsesGame):
         cost = o.get_cost()
         assert self.points >= cost
         o.spawn()
-        self.game.log.debug(f"Spawned {o!s}")
+        self.log.debug(f"Spawned {o!s}")
         self.points -= cost
         self.decide_next_enemy()
