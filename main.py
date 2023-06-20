@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import cProfile
 import logging as lg
 import sys
 import time
@@ -12,7 +11,8 @@ from pygame import Vector2 as Vec2
 from collectable import TurretItem
 from enemy import EnemyWithHealth
 from enemy_spawn_mgr import EnemySpawnMgr
-from perf import PerfMgr, DEBUG_MEMORY
+from perf import PerfMgr, DEBUG_MEMORY, DEBUG_CPU
+from perf.cpu_profile import CpuProfileContextManager
 from pg_util import render_text
 from player import Player
 from sprite_bases import RectUpdatingSprite
@@ -188,10 +188,8 @@ class Game:
         if not self.want_cpu_prof:
             return self.do_frame_inner()
         self.log.info("Recording CPU profile")
-        self.perf_mgr.create_cpu_profile()
-        with self.perf_mgr.curr_cpu_profile:
+        with CpuProfileContextManager('game_perf_3.prof'):
             self.do_frame_inner()
-        self.perf_mgr.curr_cpu_profile.dump_stats('game_perf_3.prof')
         self.log.info("CPU profile dumped to game_perf_3.prof")
 
     def do_frame_inner(self):
@@ -235,7 +233,7 @@ class Game:
                     self.perf_mgr.take_snapshot()
                     self.log.info("Memory snapshot taken")
                 raise PGExit
-            if event.type == pg.KEYDOWN and event.key == pg.K_p:
+            if event.type == pg.KEYDOWN and event.key == pg.K_p and DEBUG_CPU:
                 self.want_cpu_prof = True
             if event.type == pg.KEYDOWN and event.key == pg.K_t and ALLOW_CHEATS:
                 self.player.turrets += 20
