@@ -74,6 +74,8 @@ def _do_ignore(p: Path):
     if p.name in ('venv', '.git', '.idea', '.gitignore', 'game_perf.prof',
                   'LICENSE', '__pycache__'):
         return True
+    if str(p).endswith('.prof'):
+        return True
     return False
 
 
@@ -163,8 +165,12 @@ def disp(o: _DirLines | _FileLines, lengths: tuple[int, int], spaces: int = 0,
 def disp_dir(do: _DirLines, lengths: tuple[int, int], spaces: int = 0,
              key: str = 'name', reverse: bool = None, space_mode: int | None = None,
              sep: str | None = None, dirs_mode: str = 'first'):
-    disp_entry(str(do.path) + os.sep, do.count, do.percent, spaces, lengths, sep)
-    spaces += len(str(do.path)) + 1 if space_mode is None else space_mode
+    if space_mode is None:
+        dir_str = str(do.path.name) + os.sep
+    else:
+        dir_str = str(do.path) + os.sep
+    disp_entry(dir_str, do.count, do.percent, spaces, lengths, sep)
+    spaces += len(dir_str) if space_mode is None else space_mode
     if key == 'name':
         key_fn = (lambda c: c.path.name.lower())
     elif key == 'lines':
