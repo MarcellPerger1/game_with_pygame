@@ -287,6 +287,21 @@ class TestPositionedSprite(TestSizedSprite):
             inst.__init__(obj())
             self.assertIs(inst.pos, pos)
 
+        with MultiContextManager(
+                patch_groups(self.target_cls),
+                patch.object(self.target_cls, 'pos', obj("pos on class"))):
+            inst = self.new_inst()
+            self.pre_init(inst, PositionedSprite)
+            inst.__init__(obj(), pos=pos)
+            self.assertIs(inst.pos, pos)
+
+        with MultiContextManager(patch_groups(self.target_cls)):
+            inst = self.new_inst()
+            self.pre_init(inst, PositionedSprite)
+            with self.assertRaises(TypeError) as r:
+                inst.__init__(obj())
+            self.assertIn('pos', str(r.exception))
+
     def on_pre_init(self, inst: PositionedSprite):
         inst.pos = Vec2(23, 109)
 
