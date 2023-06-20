@@ -160,6 +160,7 @@ class Game:
 
     def post_quit(self):
         if self.perf_mgr.mem_snapshot:
+            self.log.info("Processing and printing snapshot...")
             self.perf_mgr.print_snapshot()
 
     def do_one_frame(self):
@@ -230,7 +231,9 @@ class Game:
     def handle_events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
+                self.log.info("Taking memory snapshot")
                 self.perf_mgr.take_snapshot()
+                self.log.info("Memory snapshot taken")
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
                 self.perf_mgr.take_cpu_profile()
@@ -312,7 +315,7 @@ class Player(CommonSprite):
             m += Vec2(1, 0)
         if m.length_squared() != 0:
             m = m.normalize() * SPEED
-            self.set_pos(self.pos + m)
+            self.pos += m
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         self.handle_movement()
@@ -416,8 +419,9 @@ class Tutorial(UsesGame):
 
     @trigger_once
     def place_turret(self):
-        self.game.enemy_spawner.enable()
+        self.game.enemy_spawner.enable(delay=40)
         self.game.initial_enemy.immobile = False
+        self.log.info("Tutorial finished, entering main game.")
 
 
 def main():
