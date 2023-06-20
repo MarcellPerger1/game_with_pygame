@@ -57,7 +57,8 @@ class BaseTest(TestCase):
     def __init_subclass__(cls, **kwargs):
         if (cls.on_pre_init is not None
                 and cls.on_pre_init != BaseTest.on_pre_init
-                and not getattr(cls.on_pre_init, 'is_nop', False)):
+                and not getattr(cls.on_pre_init, 'is_nop', False)
+                and cls.on_pre_init != getattr(super(cls, cls), 'on_pre_init', None)):
             cls._pre_init_list += ((cls, cls.on_pre_init),)
 
     def new_inst(self, klass=None):
