@@ -3,13 +3,14 @@ from __future__ import annotations
 import contextlib
 from typing import TypeVar, Any, Callable
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock, NonCallableMock
 
 import pygame as pg
 from pygame import Vector2 as Vec2
 
 from sprite_bases import (GroupMemberSprite, DrawableSprite, SizedSprite,
-                          PositionedSprite, SurfaceMakingSprite)
+                          PositionedSprite, SurfaceMakingSprite,
+                          RectUpdatingSprite)
 from uses_game import UsesGame
 
 T = TypeVar('T')
@@ -321,6 +322,60 @@ class TestSurfaceMakingSprite(TestPositionedSprite):
             m.assert_called_once_with()
             self.assertIs(inst.surf, m.return_value)
             self.assertIs(inst.image, m.return_value)
+
+
+class TestRectUpdatingSprite(TestSurfaceMakingSprite):
+    target_cls = RectUpdatingSprite
+
+    def on_pre_init(self, inst: RectUpdatingSprite):
+        inst.create_rect = lambda: inst.rect
+        inst.update_rect = lambda: None
+
+    def test_create_rect(self):
+        inst = self.new_inst()
+        inst.surf = inst.image = pg.Surface((23, 31))
+        self.assertEqual(inst.create_rect(), pg.Rect(0, 0, 23, 31))
+
+    def test_update_rect(self):
+        inst: RectUpdatingSprite = self.new_inst()
+        inst.pos = obj("pos")
+        rect_mock = inst.rect = NonCallableMock()
+        mock_center = type(rect_mock).center = PropertyMock()
+        inst.update_rect()
+        mock_center.assert_called_once_with(inst.pos)
+
+    def test_pos_getter(self):
+        inst: RectUpdatingSprite = self.new_inst()
+        pos = inst._pos = obj("pos")
+        self.assertIs(inst.pos, pos)
+
+    def test_pos_setter(self):
+        with patch.object(self.target_cls, 'set_pos') as m:
+            inst: RectUpdatingSprite = self.new_inst()
+            pos = inst.pos = obj("pos")
+            m.assert_called_once_with(pos)
+
+    def test_set_pos(self):
+        pos = obj("pos")
+        with patch.object(self.target_cls, 'update_rect') as m:
+            inst: RectUpdatingSprite = self.new_inst()
+            inst.rect = None
+            inst.set_pos(pos)
+            self.assertIs(inst._pos, pos)
+            m.assert_not_called()
+        with patch.object(self.target_cls, 'update_rect') as m:
+            def remember_pos_value(*_, **__):
+                nonlocal pos_in_update_fn
+                pos_in_update_fn = inst._pos
+            pos_in_update_fn = None
+            m.side_effect = remember_pos_value
+
+            inst: RectUpdatingSprite = self.new_inst()
+            inst.rect = obj("rect")
+            inst.set_pos(pos)
+            self.assertIs(inst._pos, pos)
+            m.assert_called_once_with()
+            self.assertIs(pos_in_update_fn, pos)
 
 
 class NoGroupPropsMixin:
