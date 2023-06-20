@@ -331,6 +331,38 @@ class TestRectUpdatingSprite(TestSurfaceMakingSprite):
         inst.create_rect = lambda: inst.rect
         inst.update_rect = lambda: None
 
+    def test_init_RectUpdatingSprite(self):
+        # if rect provided
+        with patch.object(self.target_cls, 'update_rect') as m_update_rect, \
+                patch.object(self.target_cls, 'create_rect') as m_create_rect, \
+                patch_groups(self.target_cls):
+            inst: RectUpdatingSprite = self.new_inst()
+            self.pre_init(inst, RectUpdatingSprite)
+            rect = inst.rect = obj("rect")
+            inst.__init__(obj("game"))
+            self.assertIs(inst.rect, rect)
+            m_update_rect.assert_not_called()
+            m_create_rect.assert_not_called()
+        # if rect not provided
+        with patch.object(self.target_cls, 'update_rect') as m_update_rect, \
+                patch.object(self.target_cls, 'create_rect') as m_create_rect, \
+                patch_groups(self.target_cls):
+            rect = m_create_rect.return_value = obj("rect")
+
+            def remember_pos_value(*_, **__):
+                nonlocal rect_in_update_fn
+                rect_in_update_fn = inst.rect
+            rect_in_update_fn = None
+            m_update_rect.side_effect = remember_pos_value
+
+            inst: RectUpdatingSprite = self.new_inst()
+            self.pre_init(inst, RectUpdatingSprite)
+            inst.__init__(obj("game"))
+            self.assertIs(inst.rect, rect)
+            m_create_rect.assert_called_once_with()
+            m_update_rect.assert_called_once_with()
+            self.assertIs(rect_in_update_fn, rect)
+
     def test_create_rect(self):
         inst = self.new_inst()
         inst.surf = inst.image = pg.Surface((23, 31))
