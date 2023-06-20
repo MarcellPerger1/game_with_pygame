@@ -51,6 +51,7 @@ def display_top(s: tracemalloc.Snapshot, key_type='lineno', limit=5,
 class MemProf:
     def __init__(self, debug_memory=True, start=True):
         self.debug_memory = debug_memory
+        self.snapshot = None
         if start:
             self.start()
 
@@ -59,14 +60,9 @@ class MemProf:
             tracemalloc.start()
 
     def take_snapshot(self):
-        if self.debug_memory:
-            s = tracemalloc.take_snapshot()
-        else:
-            s = tracemalloc.Snapshot([], 0)
-        s.is_null = self.debug_memory
-        return s
+        self.snapshot = tracemalloc.take_snapshot() if self.debug_memory else None
+        return self.snapshot
 
-    def show_top(self, s: tracemalloc.Snapshot, *args, **kwargs):
-        if not getattr(s, 'is_null', False) and self.debug_memory:
-            display_top(s, *args, **kwargs)
-    display_top = show_top
+    def display_top(self, *args, **kwargs):
+        if self.snapshot is not None:
+            display_top(self.snapshot, *args, **kwargs)

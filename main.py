@@ -11,8 +11,7 @@ from pygame import Vector2 as Vec2
 from collectable import TurretItem
 from enemy import EnemyWithHealth
 from enemy_spawn_mgr import EnemySpawnMgr
-from perf import PerfMgr, DEBUG_MEMORY, DEBUG_CPU
-from perf.cpu_profile import CpuProfileContextManager
+from perf import DEBUG_MEMORY, DEBUG_CPU, MemProf, CpuProfileContextManager
 from pg_util import render_text
 from player import Player
 from sprite_bases import RectUpdatingSprite
@@ -133,7 +132,7 @@ class Game:
     def _init_components(self):
         self.log.info('Initializing components')
         self.enemy_spawner = EnemySpawnMgr(self)
-        self.perf_mgr = PerfMgr()
+        self.mem_prof = MemProf()
         self.tutorial = Tutorial(self)
 
     def mainloop_inner(self):
@@ -157,9 +156,9 @@ class Game:
         pass
 
     def post_quit(self):
-        if self.perf_mgr.mem_snapshot:
+        if self.mem_prof.snapshot:
             self.log.info("Processing and printing snapshot...")
-            self.perf_mgr.print_snapshot()
+            self.mem_prof.display_top()
 
     def do_one_frame(self):
         self.want_cpu_prof = False
@@ -230,7 +229,7 @@ class Game:
             if event.type == pg.QUIT:
                 if DEBUG_MEMORY:
                     self.log.info("Taking memory snapshot")
-                    self.perf_mgr.take_snapshot()
+                    self.mem_prof.take_snapshot()
                     self.log.info("Memory snapshot taken")
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_p and DEBUG_CPU:
