@@ -1,4 +1,4 @@
-from .mem_profile import display_top, MemProf, fmt_size
+from .mem_profile import display_top, MemProf
 from .cpu_profile import CpuProfileContextManager
 
 DEBUG_MEMORY = False

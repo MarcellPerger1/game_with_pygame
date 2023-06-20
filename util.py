@@ -26,3 +26,16 @@ def clamp(value: NT, low: NT | None = None,
     if high is None:
         high = inf
     return min(max(value, low), high)
+
+
+def fmt_size(sz_bytes: int | float) -> str:
+    sz_bytes = int(sz_bytes)  # can't have 5.3 of a byte
+    if sz_bytes < 10*1000:
+        return f'{sz_bytes} B'
+    prefs = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'R', 'Q')
+    for i, pref in enumerate(prefs):
+        max_threshold = 10_000 * 1000**(i+1)  # eg. max 9999.9 KiB to use KiB
+        multiplier = 1024**(i+1)
+        if sz_bytes < max_threshold or i == len(pref) - 1:
+            return f'{sz_bytes/multiplier:.1f} {pref}iB'
+    raise AssertionError("Unreachable code has been reached")
