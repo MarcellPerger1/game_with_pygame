@@ -10,8 +10,9 @@ class TriggerOnce:
         self.fn = on_trigger
 
     def trigger(self, *args, **kwargs):
-        self.triggered = True
-        self.fn(*args, **kwargs)
+        if not self.triggered:
+            self.fn(*args, **kwargs)
+            self.triggered = True
 
     def __call__(self, *args, **kwargs):
         self.trigger(*args, **kwargs)
