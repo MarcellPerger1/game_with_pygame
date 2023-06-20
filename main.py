@@ -58,6 +58,7 @@ class Game:
     frame_start: float
     frame_end: float
     frame_time: float
+    want_cpu_prof: bool = False
 
     def __init__(self, init=False):
         self.is_init = False
@@ -161,10 +162,10 @@ class Game:
             self.perf_mgr.print_snapshot()
 
     def do_one_frame(self):
-        self.perf_mgr.curr_cpu_profile = None
+        self.want_cpu_prof = False
         self.init_frame()
         self.handle_events()
-        self.frame_inner_with_prof(self.perf_mgr.curr_cpu_profile)
+        self.frame_inner_with_prof()
         self.after_frame()
 
     def init_frame(self):
@@ -183,14 +184,15 @@ class Game:
         self.clock.tick(FPS)
         self.curr_tick += 1
 
-    def frame_inner_with_prof(self, p: cProfile.Profile | None):
-        if not p:
+    def frame_inner_with_prof(self):
+        if not self.want_cpu_prof:
             return self.do_frame_inner()
         self.log.info("Recording CPU profile")
-        with p:
+        self.perf_mgr.create_cpu_profile()
+        with self.perf_mgr.curr_cpu_profile:
             self.do_frame_inner()
-        p.dump_stats('game_perf.prof')
-        self.log.info("CPU profile dumped to game_perf.prof")
+        self.perf_mgr.curr_cpu_profile.dump_stats('game_perf_3.prof')
+        self.log.info("CPU profile dumped to game_perf_3.prof")
 
     def do_frame_inner(self):
         self.do_tick()
@@ -234,7 +236,7 @@ class Game:
                     self.log.info("Memory snapshot taken")
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_p:
-                self.perf_mgr.take_cpu_profile()
+                self.want_cpu_prof = True
             if event.type == pg.KEYDOWN and event.key == pg.K_t and ALLOW_CHEATS:
                 self.player.turrets += 20
                 self.turrets_text.update()
