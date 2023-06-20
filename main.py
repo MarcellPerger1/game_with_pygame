@@ -12,7 +12,7 @@ from pygame import Vector2 as Vec2
 from bullet import Bullet
 from collectable import TurretItem
 from containers import HasRect
-from enemy import CommonEnemy, EnemyWithHealth
+from enemy import EnemyWithHealth
 from enemy_spawn_mgr import EnemySpawnMgr
 from perf import PerfMgr
 from pg_util import render_text
