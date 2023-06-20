@@ -313,7 +313,7 @@ class TestSurfaceMakingSprite(TestPositionedSprite):
     target_cls = SurfaceMakingSprite
 
     def test_init_SurfaceMakingSprite(self):
-        with patch_groups(self.target_cls),\
+        with patch_groups(self.target_cls), \
                 patch.object(self.target_cls, 'make_surface') as m:
             inst: SurfaceMakingSprite = self.new_inst()
             self.pre_init(inst, SurfaceMakingSprite)
@@ -336,6 +336,7 @@ class TestRectUpdatingSprite(TestSurfaceMakingSprite):
         # the set_pos mock is so that we don't count the call from there
         def new_set_pos(self_inner, value):
             self_inner._pos = value
+
         with patch.object(self.target_cls, 'update_rect') as m_update_rect, \
                 patch.object(self.target_cls, 'create_rect') as m_create_rect, \
                 patch.object(self.target_cls, 'set_pos', new_set_pos), \
@@ -356,6 +357,7 @@ class TestRectUpdatingSprite(TestSurfaceMakingSprite):
             def remember_pos_value(*_, **__):
                 nonlocal rect_in_update_fn
                 rect_in_update_fn = inst.rect
+
             rect_in_update_fn = None
             m_update_rect.side_effect = remember_pos_value
 
@@ -403,6 +405,7 @@ class TestRectUpdatingSprite(TestSurfaceMakingSprite):
             def remember_pos_value(*_, **__):
                 nonlocal pos_in_update_fn
                 pos_in_update_fn = inst._pos
+
             pos_in_update_fn = None
             m.side_effect = remember_pos_value
 
@@ -424,10 +427,9 @@ class NoGroupPropsMixin:
 
     @classmethod
     def new_with_dummy_groups(cls) -> Any | NoGroupPropsMixin:
-        assert (
-            UsesGame not in cls.mro()
-            or cls.mro().index(cls) < cls.mro().index(UsesGame)
-        ), "NoGroupPropsMixin must come before UsesGame in mro"
+        assert (UsesGame not in cls.mro()
+                or cls.mro().index(cls) < cls.mro().index(UsesGame)
+                ), "NoGroupPropsMixin must come before UsesGame in mro"
         inst = cls.__new__(cls)
         inst.root_group = pg.sprite.Group()
         inst.display_group = pg.sprite.Group()
