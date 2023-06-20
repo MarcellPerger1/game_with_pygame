@@ -47,3 +47,7 @@ class UsesGame:
     @property
     def screen(self):
         return self.game.screen
+
+    @property
+    def log(self):
+        return self.game.log
