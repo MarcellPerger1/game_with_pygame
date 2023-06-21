@@ -157,8 +157,7 @@ class Game:
 
     def post_quit(self):
         if self.mem_prof.snapshot:
-            self.log.info("Processing and printing snapshot...")
-            self.mem_prof.display_top()
+            self.print_mem_snapshot()
 
     def do_one_frame(self):
         self.want_cpu_prof = False
@@ -228,9 +227,9 @@ class Game:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 if DEBUG_MEMORY:
-                    self.log.info("Taking memory snapshot")
-                    self.mem_prof.take_snapshot()
-                    self.log.info("Memory snapshot taken")
+                    # don't print it here, want to do
+                    # most processing after window closed
+                    self.take_mem_snapshot()
                 raise PGExit
             if event.type == pg.KEYDOWN and event.key == pg.K_p and DEBUG_CPU:
                 self.want_cpu_prof = True
@@ -239,6 +238,15 @@ class Game:
                 self.turrets_text.update()
             if event.type == pg.VIDEORESIZE:
                 self.on_resize(event)
+
+    def take_mem_snapshot(self):
+        self.log.info("Taking memory snapshot")
+        self.mem_prof.take_snapshot()
+        self.log.info("Memory snapshot taken")
+
+    def print_mem_snapshot(self):
+        self.log.info("Processing and printing snapshot...")
+        self.mem_prof.display_top()
 
     def on_resize(self, event):
         t0 = time.perf_counter()
