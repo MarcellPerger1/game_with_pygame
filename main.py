@@ -131,8 +131,8 @@ class Game:
 
     def _init_components(self):
         self.log.info('Initializing components')
-        self.enemy_spawner = EnemySpawnMgr(self)
         self.mem_prof = MemProf()
+        self.enemy_spawner = EnemySpawnMgr(self)
         self.tutorial = Tutorial(self)
 
     def mainloop_inner(self):
@@ -160,10 +160,9 @@ class Game:
             self.print_mem_snapshot()
 
     def do_one_frame(self):
-        self.want_cpu_prof = False
         self.init_frame()
         self.handle_events()
-        self.frame_inner_with_prof()
+        self.run_and_draw_frame()
         self.after_frame()
 
     def init_frame(self):
@@ -182,15 +181,20 @@ class Game:
         self.clock.tick(FPS)
         self.curr_tick += 1
 
-    def frame_inner_with_prof(self):
-        if not self.want_cpu_prof:
-            return self.do_frame_inner()
+    def run_and_draw_frame(self):
+        if self.want_cpu_prof:
+            self._run_and_draw_frame_profiled()
+        else:
+            self._run_and_draw_frame()
+
+    def _run_and_draw_frame_profiled(self):
         self.log.info("Recording CPU profile")
         with CpuProfileContextManager('game_perf_3.prof'):
-            self.do_frame_inner()
+            self._run_and_draw_frame()
         self.log.info("CPU profile dumped to game_perf_3.prof")
+        self.want_cpu_prof = False
 
-    def do_frame_inner(self):
+    def _run_and_draw_frame(self):
         self.do_tick()
         self.draw_objects()
 
