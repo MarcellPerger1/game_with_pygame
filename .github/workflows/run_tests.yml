@@ -10,13 +10,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        py_version: ["3.8.*", "3.9.*", "3.10.*", "3.11.*"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Setup python 3.8.x
+      - name: Setup python ${{ matrix.py_version }}
         uses: actions/setup-python@v4.6.1
         with:
-          python-version: "3.8.*"
+          python-version: ${{ matrix.py_version }}
           cache: pip
           cache-dependency-path: ./requirements.txt
       - name: Install pygame
