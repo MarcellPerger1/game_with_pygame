@@ -10,6 +10,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        py_version: ["3.8.*", "3.9.*", "3.10.*", "3.11.*"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
